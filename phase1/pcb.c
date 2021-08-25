@@ -4,12 +4,15 @@
 
 void freePcb(pcb_PTR p)
 {
+
 }
 pcb_PTR allocPcb()
 {
+
 }
 void initPcbs()
 {
+    
 }
 pcb_PTR mkEmptyProcQ()
 {
