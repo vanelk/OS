@@ -114,5 +114,10 @@ typedef struct pcb_t
     /* support layer information */
     support_t *p_supportStruct; /* ptr to support struct */
 } pcb_t, *pcb_PTR;
-
+typedef struct semd_t{
+ struct semd_t *s_next; /* next element on the ASL*/
+ int *s_semAdd; /* pointer to the semaphore */
+ pcb_t *s_procQ /* processs queue */
+} semd_t
+}
 #endif
