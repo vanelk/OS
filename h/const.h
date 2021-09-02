@@ -85,5 +85,5 @@
 
 /* Macro to read the TOD clock */
 #define STCK(T) ((T) = ((* ((cpu_t *) TODLOADDR)) / (* ((cpu_t *) TIMESCALEADDR))))
-
+#define MAXPROC 20
 #endif
