@@ -7,7 +7,7 @@ HIDDEN semd_t *semd_h, *semFree_h;
 *
 */
 void insertSem(semd_t * sem){
-    semd_t * next = semFree_h;
+    semd_t *next = semFree_h;
     semFree_h->s_next = next;
     semFree_h = next;
 }
@@ -31,14 +31,23 @@ semd_t *deallocSem(semd_t *sem){
     semFree_h = sem;
 }
 
+semd_t *search(int *semAdd){
+    semd_t *current = semd_h;
+    while(semAdd > (current->s_next->s_semAdd)){
+	current = current->s_next;
+    }
+
+    return current;
+}
+
 /*
 *
 *
 */
 void initASL(){
-    static semd_t semdTable[MAXPROC];
+    static semd_t semdTable[MAXPROC+2];
     for(int i=0; i<MAXPROC; i++){
-        dSem(&semdTable[i]);
+        deallocSem(&semdTable[i]);
     }
 }
 
@@ -102,7 +111,24 @@ pcb_PTR removeBlocked(int *semdAdd){
 *
 */
 pcb_PTR outBlocked(pcb_PTR p){
-    
+    semd_t *parent = search(p->p_semAdd);
+
+    if(parent->s_semAdd == MAXINT){
+	return NULL;
+    }
+
+    if(parent->s_next->s_semAdd == p->p_semAdd){
+        pcb_PTR pcbToReturn = outProcQ(&(parent->s_next->s_procQ), p);
+
+	if(emptyProcQ(&(parent->s_next->s_procQ)){
+	    deallocSem(parent->s_next)
+	}
+	
+	return pcbToReturn;
+    }
+    else{
+    return NULL;
+    }
 }
 
 /*
@@ -110,5 +136,8 @@ pcb_PTR outBlocked(pcb_PTR p){
 *
 */
 pcb_PTR headBlocked(int semAdd){
-    
+    semd_t *temp = search(semAdd)
+    return headProcQ(temp->s_next->s_proqQ);
 }
+
+
