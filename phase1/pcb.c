@@ -75,7 +75,7 @@ void insertProcQ(pcb_PTR *tp, pcb_PTR p)
         p->p_next->p_prev = p;
     }
 }
-/* [X]*/
+/* [X] */
 pcb_PTR removeProcQ(pcb_PTR *tp)
 {
     if (emptyProcQ(*tp))
