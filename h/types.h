@@ -98,6 +98,10 @@ typedef struct state_t {
 #define s_ra	s_reg[28]
 #define s_HI	s_reg[29]
 #define s_LO	s_reg[30]
+typedef struct support_t
+{
+	/* data */
+} support_t;
 
 typedef struct pcb_t
 {
@@ -118,12 +122,9 @@ typedef struct pcb_t
 typedef struct semd_t{
  struct semd_t *s_next; /* next element on the ASL*/
  int *s_semAdd; /* pointer to the semaphore */
- pcb_t *s_procQ /* processs queue */
+ pcb_t *s_procQ; /* processs queue */
 } semd_t;
 
-typedef struct support_t
-{
-	/* data */
-} support_t;
+
 
 #endif

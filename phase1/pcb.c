@@ -1,8 +1,12 @@
-#include "../h/const.h";
-#include "../h/types.h";
-#include "../h/pcb.h";
+#include "../h/const.h"
+#include "../h/types.h"
+#include "../h/pcb.h"
 HIDDEN pcb_PTR pcb_free_h;
-
+void debugMg(int a, int b, int c)
+{
+    int k = 43;
+    k++;
+}
 /*
 *
 *
@@ -18,7 +22,17 @@ void freePcb(pcb_PTR p)
 */
 pcb_PTR allocPcb()
 {
-    return removeProcQ(&(pcb_free_h));
+    pcb_PTR removed = removeProcQ(&(pcb_free_h));
+    if(removed!=NULL){
+        removed->p_child = NULL;
+        removed->p_next = NULL;
+        removed->p_prnt = NULL;
+        removed->p_semAdd = NULL;
+        removed->p_sib = NULL;
+    }
+    
+    return removed;
+
 }
 
 /*
@@ -29,7 +43,8 @@ void initPcbs()
 {
     static pcb_t foo[MAXPROC];
     pcb_free_h = NULL;
-    for (int i = 0; i < MAXPROC; i++)
+    int i = 0;
+    for (i = 0; i < MAXPROC; i++)
     {
         freePcb(&(foo[i]));
     }
@@ -63,28 +78,35 @@ void insertProcQ(pcb_PTR *tp, pcb_PTR p)
     {
         p->p_next = p;
         p->p_prev = p;
-        *tp = p;
     }
     else
     {
-        pcb_PTR tmp = *tp;
-        *tp = p;
-        p->p_next = tmp->p_next;
-        p->p_prev = tmp;
-        tmp->p_next = p;
-        p->p_next->p_prev = p;
+        pcb_PTR tmp = (*tp);
+        p->p_next = tmp;
+        p->p_prev = tmp->p_prev;
+        tmp->p_prev = p;
+        p->p_prev->p_next = p;
     }
+    (*tp) = p;
 }
-/* [X] */
+/*
+*
+*/
 pcb_PTR removeProcQ(pcb_PTR *tp)
 {
     if (emptyProcQ(*tp))
     {
         return NULL;
     }
+    pcb_PTR tail = *tp;
+    if (tail->p_prev == tail)
+    {
+        (*tp) = NULL;
+        return tail;
+    }
     else
     {
-        pcb_PTR tail = *tp;
+
         pcb_PTR removed = tail->p_prev;
         tail->p_prev = removed->p_prev;
         return removed;
@@ -122,14 +144,31 @@ pcb_PTR outProcQ(pcb_PTR *tp, pcb_PTR p)
 
 pcb_PTR headProcQ(pcb_PTR tp)
 {
+    if (emptyProcQ(tp))
+    {
+        return NULL;
+    }
     return tp->p_prev;
 }
 
 void insertChild(pcb_PTR prnt, pcb_PTR p)
 {
-    p->p_sib = prnt->p_child;
-    p->p_prnt = prnt;
-    prnt->p_child = p;
+    if (emptyChild(prnt))
+    {
+        prnt->p_child = p;
+        p->p_prnt = prnt;
+        p->p_sib = NULL;
+    }
+    else
+    {
+        p->p_sib = prnt->p_child;
+        p->p_prnt = prnt;
+        prnt->p_child = p;
+    }
+}
+int emptyChild(pcb_PTR p)
+{
+    return (p->p_child == NULL);
 }
 
 pcb_PTR removeChild(pcb_PTR p)
@@ -147,24 +186,24 @@ pcb_PTR removeChild(pcb_PTR p)
 }
 pcb_PTR outChild(pcb_PTR p)
 {
+    if(p->p_prnt == NULL) return NULL;
     pcb_PTR parent = p->p_prnt;
     pcb_PTR currentChild = parent->p_child;
     pcb_PTR lastChild = NULL;
     if (currentChild == p)
     {
-        removeChild(parent);
+        return removeChild(parent);
     }
-    while (1)
+    while (currentChild != NULL)
     {
         if (currentChild == p)
         {
             lastChild->p_sib = p->p_sib;
+            p->p_prnt = NULL;
             return p;
         }
-        else
-        {
-            lastChild = currentChild;
-            currentChild = currentChild->p_sib;
-        }
+        lastChild = currentChild;
+        currentChild = currentChild->p_sib;
     }
+    return NULL;
 }
