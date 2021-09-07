@@ -17,4 +17,5 @@ process tree module ok
 Initialized active semaphore list   
 insertBlocked test #1 started  
 insertBlocked test #2 started  
-kernel panic()
+removeBlocked test started   
+insertBlocked and removeBlocked ok   
