@@ -114,7 +114,7 @@ typedef struct pcb_t
         *p_sib; /* pointer to sibling */
     state_t p_s; /* processor state */
     cpu_t p_time; /* cpu time used by proc */
-    int *p_semAdd; /* pointer to sema4in which process blocked */
+    int *p_semAdd; /* pointer to sema4 in which process blocked */
     /* support layer information */
     support_t *p_supportStruct; /* ptr to support struct */
 } pcb_t, *pcb_PTR;

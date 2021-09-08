@@ -117,6 +117,7 @@ pcb_PTR outProcQ(pcb_PTR *tp, pcb_PTR p)
 {
     pcb_PTR tail = *tp;
     pcb_PTR current = tail;
+    if(p->p_prev == NULL && p->p_next == NULL) return NULL;
     while (1)
     {
         if (current == p)
@@ -132,6 +133,8 @@ pcb_PTR outProcQ(pcb_PTR *tp, pcb_PTR p)
                 p->p_next->p_prev = p->p_prev;
                 p->p_prev->p_next = p->p_next;
             }
+            p->p_next = NULL;
+            p->p_prev = NULL;
             return p;
         }
         else if (current->p_next == tail)
