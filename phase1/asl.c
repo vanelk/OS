@@ -28,7 +28,7 @@ void deallocSem(semd_t *sem)
 
 semd_t *search(int *semAdd)
 {
-    semd_t *current = (semd_t *)semd_h;
+    semd_t *current = semd_h;
     while (semAdd > (current->s_next->s_semAdd))
     {
         current = current->s_next;
