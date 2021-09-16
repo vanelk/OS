@@ -1,7 +1,7 @@
 #include <limits.h>
 #include "../h/pcb.h"
 #include "../h/asl.h"
-HIDDEN semd_t *semd_h, *semdFree_h;
+HIDDEN semd_t *semd_h, *semdFree_h = NULL;
 
 /************************************************************************/
 /************************ Hidden Methods ********************************/
@@ -16,7 +16,7 @@ HIDDEN semd_t *semd_h, *semdFree_h;
 */
 HIDDEN semd_t *allocSem()
 {
-    if (((int*)semdFree_h) == 0)
+    if (semdFree_h == NULL)
         return NULL;
     semd_t *freed = semdFree_h;
     semdFree_h = semdFree_h->s_next;
