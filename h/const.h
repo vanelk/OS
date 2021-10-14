@@ -35,6 +35,7 @@
 #define PRNTINT 		  6
 #define TERMINT			  7
 
+#define DEVNUM            49
 #define DEVINTNUM		  5		  /* interrupt lines used by devices */
 #define DEVPERINT		  8		  /* devices per interrupt line */
 #define DEVREGLEN		  4		  /* device register field length in bytes, and regs per dev */	
@@ -86,4 +87,15 @@
 /* Macro to read the TOD clock */
 #define STCK(T) ((T) = ((* ((cpu_t *) TODLOADDR)) / (* ((cpu_t *) TIMESCALEADDR))))
 #define MAXPROC 20
+#define QUANTUM 100
+
+/* syscalls */
+#define CREATEPROCESS 1
+#define TERMINATEPROCESS 2
+#define PASSEREN 3
+#define VERHOGEN 4
+#define WAITIO 5
+#define GETCPUTIME 6
+#define WAITCLOCK 7
+#define GETSUPPORTPTR 8
 #endif

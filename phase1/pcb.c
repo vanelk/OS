@@ -1,3 +1,7 @@
+/**
+ * PCB module Process Control Block 
+ * Provides Queue Services
+*/
 #include "../h/const.h"
 #include "../h/types.h"
 #include "../h/pcb.h"

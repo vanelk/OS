@@ -1,3 +1,6 @@
+/**
+ * The ASL Module 
+ */
 #include <limits.h>
 #include "../h/pcb.h"
 #include "../h/asl.h"
@@ -39,6 +42,7 @@ HIDDEN void deallocSem(semd_t *sem)
 HIDDEN semd_t *search(int *semAdd)
 {
     semd_t *current = semd_h;
+    /*Loop through the semaphore active list and search value*/
     while (semAdd > (current->s_next->s_semAdd))
     {
         current = current->s_next;
