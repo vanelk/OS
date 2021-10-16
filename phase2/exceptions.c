@@ -2,6 +2,7 @@
 #include "../h/const.h"
 #include "../h/pcb.h"
 #include "../h/asl.h"
+#include "../h/scheduler.h"
 #include "../h/exceptions.h"
 
 extern currentProc;
@@ -32,7 +33,8 @@ void SYSCALL(int a0, int a1, int a2, int a3){
     
     case TERMINATEPROCESS:
         terminateProc(currentProc);
-        returnExceptionState(0);
+        processCount--;
+        scheduler();
         break;
     
     case PASSEREN:
@@ -83,6 +85,6 @@ void returnExceptionState(int returnVal){
         state_PTR except_state;
         except_state = (state_PTR) 0x0FFF0000;
         except_state->s_v0 = returnVal;
-        // add 4 to pc
-        except_state->s_pc+=4;
+        /* add 4 to pc */
+        except_state->s_t9 = except_state->s_pc+=4;
 }
