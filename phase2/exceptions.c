@@ -8,27 +8,22 @@
 extern currentProc;
 extern readyQueue;
 extern processCount;
-void SYSCALL(int a0, int a1, int a2, int a3){
+
+HIDDEN int createProc();
+HIDDEN void terminateProc(pcb_PTR prnt);
+HIDDEN void pass();
+HIDDEN void ver();
+HIDDEN void waitForIO();
+HIDDEN void getCPUTime();
+HIDDEN void waitForClock();
+HIDDEN void getSupport();
+
+void SYSCALL(){
+    
     switch (a0)
     {
     case CREATEPROCESS:
-        pcb_PTR child = allocPcb();
-        int returnStatus = -1;
-        if(child != NULL){
-            insertChild(currentProc, child);
-            insertProcQ(readyQueue, child);
-            child->p_s = *((state_PTR) a1);
-            if(a2 != 0){
-                child->p_supportStruct = (support_t *) a2;
-            } else {
-                child->p_supportStruct = NULL;
-            }
-            child->p_time = 0;
-            child->p_semAdd = NULL;
-            processCount++;
-            returnStatus = 0;
-        }
-        returnExceptionState(returnStatus);
+        returnExceptionState(createProc);
         break;
     
     case TERMINATEPROCESS:
@@ -66,6 +61,26 @@ void SYSCALL(int a0, int a1, int a2, int a3){
     }
 }
 /* Utility function takes in parent process*/
+int createProc(){
+pcb_PTR child = allocPcb();
+        int returnStatus = -1;
+        if(child != NULL){
+            insertChild(currentProc, child);
+            insertProcQ(readyQueue, child);
+            child->p_s = *((state_PTR) a1);
+            if(a2 != 0){
+                child->p_supportStruct = (support_t *) a2;
+            } else {
+                child->p_supportStruct = NULL;
+            }
+            child->p_time = 0;
+            child->p_semAdd = NULL;
+            processCount++;
+            returnStatus = 0;
+        }
+return returnStatus;
+}
+
 void terminateProc(pcb_PTR prnt){
         pcb_PTR child = removeChild(prnt);
         if (child != NULL)
@@ -79,6 +94,40 @@ void terminateProc(pcb_PTR prnt){
             }
             terminateProc(child);   
         }
+}
+
+void pass(){
+/*
+mutex--
+if(mutex<0){
+insertBlocked(&mutex,currentProc()){
+scheduler
+*/
+}
+
+void ver(){
+/*
+mutex++
+if(mutex<=0){
+temp = removeBlicked(&mutex)
+insertProcQ(&readyQ,temp)
+*/
+}
+
+void waitForIO(){
+
+}
+
+void getCPUTime(){
+
+}
+
+void waitForClock(){
+
+}
+
+HIDDEN void getSupport(){
+
 }
 
 void returnExceptionState(int returnVal){
