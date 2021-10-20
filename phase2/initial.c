@@ -25,13 +25,13 @@ int main(){
     devregarea_t* devBus = (devregarea_t*) RAMBASEADDR;
     int TopOfRAM = (devBus->rambase + devBus->ramsize); /*set top of ram memory address*/
     /* populate processor 0 passup vector. */
-    passupvector_t* nuke = (passupvector_t *) (0x0FFFF900);
+    passupvector_t* nuke = (passupvector_t *) PASSUPVECTOR;
     nuke->tlb_refll_handler = (memaddr) uTLB_RefillHandler; /* to be  implemented */
     /* setting the stack pointer for the nucleus TBL-refill event handler to top of nucleus stack page */
-    nuke->exception_stackPtr = 0x20001000; 
+    nuke->exception_stackPtr = NUKE; 
     nuke->exception_handler = (memaddr) exceptionHandler;
     /* load interupthandler */
-    nuke->exception_stackPtr = 0x20001000;
+    nuke->exception_stackPtr = NUKE;
 
     /* set globals */
     processCount = 0;
@@ -40,12 +40,12 @@ int main(){
     currentProc = allocPcb();
     if(currentProc!= NULL){
         currentProc->p_s.s_pc = currentProc->p_s.s_t9 = (memaddr) test;
-        currentProc->p_s.s_status = 100000;
+        currentProc->p_s.s_status = STATUSREG;
         currentProc->p_s.s_sp = (TopOfRAM - PAGESIZE);
         currentProc->p_supportStruct = NULL;
         insertProcQ(&readyQueue, currentProc);
         processCount++;
-        LDIT(startTOD);
+        LDIT(100);
 
         scheduler();
 
@@ -57,17 +57,18 @@ int main(){
 }
 
 void uTLB_RefillHandler(){
-    setENTRYHI(0x80000000);
-    setENTRYLO(0x00000000);
+    setENTRYHI(KUSEG);
+    setENTRYLO(KSEG0);
     TLBWR();
-    LDST((state_PTR) 0x0FFFF000);
+    LDST((state_PTR) BIOSDATAPAGE);
 }
 
-exceptionHandler(){
+void exceptionHandler(){
     state_PTR oldstate;
     oldstate = (state_PTR) BIOSDATAPAGE;
-    int reason = (oldstate->s_cause >> 2) << 25;
+    int reason = (oldstate->s_cause >> 2) << 24;
     if(reason == 0) interuptIOTrap();
-    if(reason == 8) SYSCALL();
+    if(reason <= 7) otherExceptions();
+    if(reason == 8) SYSCALLHandler();
 
 }

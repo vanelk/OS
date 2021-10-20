@@ -98,4 +98,10 @@
 #define GETCPUTIME 6
 #define WAITCLOCK 7
 #define GETSUPPORTPTR 8
+
+#define NUKE 0x20001000
+#define STATUSREG 0x10400000
+
+#define DEVADD 1
+#define LINESUB 2
 #endif

@@ -1,4 +1,4 @@
 #ifndef EXCEPTIONS
 #define  EXCEPTIONS
-extern void SYSCALL();
+extern void SYSCALLHandler();
 #endif;

@@ -8,77 +8,85 @@
 extern currentProc;
 extern readyQueue;
 extern processCount;
+extern softBlockCount;
+extern semDevices;
+extern loadState;
 
-HIDDEN int createProc();
+HIDDEN int mutex = 1;
+int *clockSem = &semDevices[DEVNUM];
+
+HIDDEN int createProc(state_PTR curr);
 HIDDEN void terminateProc(pcb_PTR prnt);
-HIDDEN void pass();
-HIDDEN void ver();
-HIDDEN void waitForIO();
-HIDDEN void getCPUTime();
-HIDDEN void waitForClock();
-HIDDEN void getSupport();
+HIDDEN void pass(state_PTR curr);
+HIDDEN void ver(state_PTR curr);
+HIDDEN void waitForIO(state_PTR curr);
+HIDDEN void getCPUTime(state_PTR curr);
+HIDDEN void waitForClock(state_PTR curr);
+HIDDEN void getSupport(state_PTR curr);
+HIDDEN void passUpOrDie(state_PTR curr);
 
-void SYSCALL(){
-    
-    switch (a0)
+void SYSCALLHandler(){
+    state_PTR ps = (state_PTR) BIOSDATAPAGE;
+    switch (ps->s_a0)
     {
-    case CREATEPROCESS:
-        returnExceptionState(createProc);
-        break;
+    case CREATEPROCESS:{
+        returnExceptionState(createProc(ps));
+        break;}
     
-    case TERMINATEPROCESS:
+    case TERMINATEPROCESS:{
         terminateProc(currentProc);
         processCount--;
         scheduler();
-        break;
+        break;}
     
-    case PASSEREN:
+    case PASSEREN:{
         /* code */
-        break;
+        break;}
     
-    case VERHOGEN:
+    case VERHOGEN:{
         /* code */
-        break;
+        break;}
     
-    case WAITIO:
+    case WAITIO:{
         /* code */
-        break;
+        break;}
     
-    case GETCPUTIME:
+    case GETCPUTIME:{
         /* code */
-        break;
+        break;}
     
-    case WAITCLOCK:
+    case WAITCLOCK:{
         /* code */
-        break;
+        break;}
 
-    case GETSUPPORTPTR:
+    case GETSUPPORTPTR:{
         /* code */
-        break;
+        break;}
     
-    default:
-        break;
+    default:{
+        passUpOrDie(ps);
+        break;}
     }
 }
 /* Utility function takes in parent process*/
-int createProc(){
-pcb_PTR child = allocPcb();
-        int returnStatus = -1;
-        if(child != NULL){
-            insertChild(currentProc, child);
-            insertProcQ(readyQueue, child);
-            child->p_s = *((state_PTR) a1);
-            if(a2 != 0){
-                child->p_supportStruct = (support_t *) a2;
-            } else {
-                child->p_supportStruct = NULL;
-            }
-            child->p_time = 0;
-            child->p_semAdd = NULL;
-            processCount++;
-            returnStatus = 0;
+int createProc(state_PTR curr){
+    pcb_PTR child = allocPcb();
+    int returnStatus = -1;
+    if(child != NULL){
+        insertChild(currentProc, child);
+        insertProcQ(readyQueue, child);
+        child->p_s = *((state_PTR) curr->s_a1);
+        if(curr->s_a2 != 0 || curr->s_a2 != NULL){
+            child->p_supportStruct = (support_t *) curr->s_a2;
+        } else {
+            child->p_supportStruct = NULL;
         }
-return returnStatus;
+        child->p_time = 0;
+        child->p_semAdd = NULL;
+        processCount++;
+        returnStatus = 0;
+    }
+    return returnStatus;
 }
 
 void terminateProc(pcb_PTR prnt){
@@ -96,44 +104,70 @@ void terminateProc(pcb_PTR prnt){
         }
 }
 
-void pass(){
-/*
-mutex--
-if(mutex<0){
-insertBlocked(&mutex,currentProc()){
-scheduler
-*/
+void pass(state_PTR curr){
+    semd_t * sem = (semd_t* ) curr->s_a1;
+    mutex--;
+    if(mutex<0){
+        insertBlocked(sem->s_semAdd, currentProc);
+        scheduler();
+    }
+    incrementPC();
 }
 
-void ver(){
-/*
-mutex++
-if(mutex<=0){
-temp = removeBlicked(&mutex)
-insertProcQ(&readyQ,temp)
-*/
+void ver(state_PTR curr){
+    semd_t * sem = (semd_t*) curr->s_a1;
+    mutex++;
+    if(mutex<=0){
+        pcb_PTR temp = removeBlocked(sem->s_semAdd);
+        insertProcQ(&readyQueue, temp);
+    }
+    incrementPC();
+}
+void waitForIO(state_PTR curr){
+    int lineNo = curr->s_a1;
+    int devNo = curr->s_a2;
+    int waitterm = curr->s_a3;
+    int devi = ((lineNo) * (devNo + DEVADD));
+    semDevices[devi]++;
+    softBlockCount++;
+    insertBlocked(&devi, currentProc);
+    scheduler();
 }
 
-void waitForIO(){
-
+void getCPUTime(state_PTR curr){
+    int time;
+    STCK(time);
+    currentProc->p_time = time;
+    incrementPC();
 }
 
-void getCPUTime(){
-
+void waitForClock(state_PTR curr){
+    insertBlocked(clockSem, currentProc);
+    scheduler();
 }
 
-void waitForClock(){
-
-}
-
-HIDDEN void getSupport(){
-
+void getSupport(state_PTR curr){
+    returnExceptionState(currentProc->p_supportStruct);
 }
 
 void returnExceptionState(int returnVal){
         state_PTR except_state;
-        except_state = (state_PTR) 0x0FFF0000;
+        except_state = (state_PTR) BIOSDATAPAGE;
         except_state->s_v0 = returnVal;
         /* add 4 to pc */
-        except_state->s_t9 = except_state->s_pc+=4;
+        incrementPC();
 }
+void incrementPC(){
+    state_PTR except_state = (state_PTR) BIOSDATAPAGE;
+    except_state->s_t9 = except_state->s_pc+=4;
+    loadState(currentProc->p_s);   
+}
+
+void passUpOrDie(state_PTR curr){
+    if(currentProc->p_supportStruct== NULL){
+        terminateProc(currentProc); 
+    } 
+    currentProc->p_supportStruct.sup_exceptState = curr;
+    LDCXT(currentProc->p_supportStruct.sup_exceptContext);   
+}
+

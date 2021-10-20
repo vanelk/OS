@@ -12,7 +12,7 @@ cpu_t timeElapsed;
 /* The scheduling algorithm implemented is round-robin*/
 void scheduler(){
     /* get time how long the process has been running*/
-    LDIT(timeElapsed);
+    STCK(timeElapsed);
     /* Set time of current cpu */
     currentProc->p_time = currentProc->p_time + (timeElapsed - startTOD);
     /* remove next process from the ready queue */
@@ -21,8 +21,8 @@ void scheduler(){
     if (next != NULL){
         /* set currentproc to the next process */
         currentProc = next;
-        STCK(startTOD);
-        LDST(&currentProc->p_s);
+        LDIT(startTOD);
+        loadState(&currentProc->p_s);
     }
     if(processCount == 0){
         HALT();
@@ -32,4 +32,8 @@ void scheduler(){
         if(softBlockCount == 0) PANIC();
 
     }
+}
+
+void loadState(state_PTR ps){
+    LDST(ps);
 }
