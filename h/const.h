@@ -104,4 +104,6 @@
 
 #define DEVADD 1
 #define LINESUB 2
+
+#define ONE 1
 #endif

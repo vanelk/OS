@@ -63,7 +63,7 @@ typedef struct state_t {
 	unsigned int	s_cause;
 	unsigned int	s_status;
 	unsigned int 	s_pc;
-	int	 			s_reg[STATEREGNUM];
+	int	 	s_reg[STATEREGNUM];
 
 } state_t, *state_PTR;
 
@@ -98,9 +98,16 @@ typedef struct state_t {
 #define s_ra	s_reg[28]
 #define s_HI	s_reg[29]
 #define s_LO	s_reg[30]
+typedef struct context)t{
+    unsigned int c_stackPtr,
+                 c_status,
+                 c_pc;
+} context_t;
 typedef struct support_t
 {
-	/* data */
+    int sub_asid;
+    state_t sup_exceptState[2];
+    context_t sup_exceptContext[2];
 } support_t;
 
 typedef struct pcb_t
@@ -124,7 +131,5 @@ typedef struct semd_t{
  int *s_semAdd; /* pointer to the semaphore */
  pcb_t *s_procQ; /* processs queue */
 } semd_t;
-
-
 
 #endif
