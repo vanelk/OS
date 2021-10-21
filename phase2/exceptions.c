@@ -12,7 +12,7 @@ extern softBlockCount;
 extern semDevices;
 extern loadState;
 
-HIDDEN int mutex = 1;
+HIDDEN int semdAdd;
 int *clockSem = &semDevices[DEVNUM];
 
 HIDDEN int createProc(state_PTR curr);
@@ -24,6 +24,7 @@ HIDDEN void getCPUTime(state_PTR curr);
 HIDDEN void waitForClock(state_PTR curr);
 HIDDEN void getSupport(state_PTR curr);
 HIDDEN void passUpOrDie(state_PTR curr);
+HIDDEN void stateCopy(state_PTR oldState, state_PTR newState);
 
 void SYSCALLHandler(){
     state_PTR ps = (state_PTR) BIOSDATAPAGE;
@@ -105,21 +106,25 @@ void terminateProc(pcb_PTR prnt){
 }
 
 void pass(state_PTR curr){
-    semd_t * sem = (semd_t* ) curr->s_a1;
-    mutex--;
-    if(mutex<0){
-        insertBlocked(sem->s_semAdd, currentProc);
+    semdAdd = curr->s_a1;
+    semdAdd +- ONE;
+    if(semdAdd<0){
+	/* we need to copy the previous state into current state */
+        insertBlocked(semdAdd, currentProc);
         scheduler();
     }
     incrementPC();
 }
 
 void ver(state_PTR curr){
-    semd_t * sem = (semd_t*) curr->s_a1;
-    mutex++;
-    if(mutex<=0){
-        pcb_PTR temp = removeBlocked(sem->s_semAdd);
-        insertProcQ(&readyQueue, temp);
+    semdAdd = curr->s_a1;
+    semdAdd += ONE;
+
+    if(semdAdd<=0){
+        pcb_PTR temp = removeBlocked(semdAdd);
+	if(temp != NULL) {
+            insertProcQ(&readyQueue, temp);
+	}
     }
     incrementPC();
 }
@@ -169,5 +174,16 @@ void passUpOrDie(state_PTR curr){
     } 
     currentProc->p_supportStruct.sup_exceptState = curr;
     LDCXT(currentProc->p_supportStruct.sup_exceptContext);   
+}
+
+void stateCopy(state_PTR oldState, state_PTR newState){
+    int i=0;
+    for(i=0; i<STATEREGNUN; i++){
+	newState->s_reg[i] = oldState->s_reg[i];
+    }
+    newState->s_entryHI = oldState->s_entryHI;
+    newState->s_cause = oldState->s_cause;
+    newState->s_status = oldState->s_status;
+    newState->s_pc = oldState->s_pc;
 }
 
