@@ -13,6 +13,7 @@ pcb_PTR readyQueue; /* pointer to the ready queue */
 pcb_PTR currentProc; /* pointer to the current process*/
 int semDevices[DEVNUM]; /* 1 for each device available (49) in total */
 cpu_t startTOD;
+int *clockSem = &semDevices[DEVNUM-ONE];
 extern void test();
 
 
@@ -21,16 +22,6 @@ int main(){
     /*initialize PCB and ASL*/
     initPcbs();
     initASL();
-    /* set globals */
-    processCount = 0;
-    softBlockCount = 0;
-    readyQueue = mkEmptyProcQ();
-    currentProc = NULL;
-
-    int i;
-    for(i=ZERO; i <DEVNUM; i++;){
-	semDevices[i] = ZERO;
-    }
 
     devregarea_t* devBus = (devregarea_t*) RAMBASEADDR;
     int TopOfRAM = (devBus->rambase + devBus->ramsize); /*set top of ram memory address*/
@@ -43,6 +34,10 @@ int main(){
     /* load interupthandler */
     nuke->exception_stackPtr = NUKE;
 
+    /* set globals */
+    processCount = 0;
+    softBlockCount = 0;
+    readyQueue = mkEmptyProcQ();
     currentProc = allocPcb();
     if(currentProc!= NULL){
         currentProc->p_s.s_pc = currentProc->p_s.s_t9 = (memaddr) test;
@@ -51,7 +46,7 @@ int main(){
         currentProc->p_supportStruct = NULL;
         insertProcQ(&readyQueue, currentProc);
         processCount++;
-        LDIT(QUANTUM);
+        LDIT(100);
 
         scheduler();
 

@@ -12,8 +12,7 @@ extern softBlockCount;
 extern semDevices;
 extern loadState;
 extern startTOD;
-
-int *clockSem = &semDevices[DEVNUM];
+extern clockSem;
 
 HIDDEN int createProc(state_PTR curr);
 HIDDEN void terminateProc(pcb_PTR prnt);
@@ -24,7 +23,6 @@ HIDDEN void getCPUTime(state_PTR curr);
 HIDDEN void waitForClock(state_PTR curr);
 HIDDEN void getSupport(state_PTR curr);
 HIDDEN void passUpOrDie(state_PTR curr);
-HIDDEN void stateCopy(state_PTR oldState, state_PTR newState);
 void pgrmTrap();
 void tblTrab();
 
@@ -92,7 +90,7 @@ int createProc(state_PTR curr){
 }
 
 void terminateProc(pcb_PTR curr){
-    while(!emptyChild(curr){
+    while(!emptyChild(curr)){
 	terminateProc(removeChild(curr));
     }
 /*check if in readyQueue*/
@@ -103,19 +101,19 @@ void terminateProc(pcb_PTR curr){
     if(currentProc == curr){
 	outChild(curr);
     }
-/*this bitch hiding in semaphores*/
-    else{
-	int* semdAdd = curr->p_semAdd;
-	outBlocked(curr);
-	if( semdAdd >= semDevices[ZERO] && semdAdd <= semDevices[DEVNUM]{
-	    softBlockCount ---;
-	}
-	else{
-	    semdAdd ++;	
-	}
-	
+    /*this bitch hiding in semaphores*/
+        else{
+        int* semdAdd = curr->p_semAdd;
+        outBlocked(curr);
+        if( semdAdd >= semDevices[ZERO] && semdAdd <= semDevices[DEVNUM]){
+            softBlockCount--;
+        }
+        else{
+            semdAdd++;	
+        }
+        
     }
-    freePcb(prnt);
+    freePcb(curr);
     processCount -= ONE;
 }
 
@@ -137,7 +135,7 @@ void ver(state_PTR curr){
     if(semdAdd<=0){
         pcb_PTR temp = removeBlocked(semdAdd);
 	if(temp != NULL) {
-            insertProcQ(&readyQueue, temp);
+        insertProcQ(&readyQueue, temp);
 	}
     }
     incrementPC();
