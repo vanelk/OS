@@ -11,8 +11,8 @@ extern processCount;
 extern softBlockCount;
 extern semDevices;
 extern loadState;
+extern startTOD;
 
-HIDDEN int semdAdd;
 int *clockSem = &semDevices[DEVNUM];
 
 HIDDEN int createProc(state_PTR curr);
@@ -25,6 +25,8 @@ HIDDEN void waitForClock(state_PTR curr);
 HIDDEN void getSupport(state_PTR curr);
 HIDDEN void passUpOrDie(state_PTR curr);
 HIDDEN void stateCopy(state_PTR oldState, state_PTR newState);
+void pgrmTrap();
+void tblTrab();
 
 void SYSCALLHandler(){
     state_PTR ps = (state_PTR) BIOSDATAPAGE;
@@ -36,32 +38,31 @@ void SYSCALLHandler(){
     
     case TERMINATEPROCESS:{
         terminateProc(currentProc);
-        processCount--;
         scheduler();
         break;}
     
     case PASSEREN:{
-        /* code */
+        pass(ps);
         break;}
     
     case VERHOGEN:{
-        /* code */
+        ver(ps);
         break;}
     
     case WAITIO:{
-        /* code */
+        waitForIO(ps);
         break;}
     
     case GETCPUTIME:{
-        /* code */
+        getCPUTime(ps);
         break;}
     
     case WAITCLOCK:{
-        /* code */
+        waitForClock(ps);
         break;}
 
     case GETSUPPORTPTR:{
-        /* code */
+        getSupport(ps);
         break;}
     
     default:{
@@ -90,24 +91,37 @@ int createProc(state_PTR curr){
     return returnStatus;
 }
 
-void terminateProc(pcb_PTR prnt){
-        pcb_PTR child = removeChild(prnt);
-        if (child != NULL)
-        {
-            pcb_PTR c = outProcQ(&readyQueue, child);
-            if(c != NULL) processCount--;
-            pcb_PTR sib = child->p_next;
-            while(sib != NULL){
-                terminateProc(sib);
-                sib = sib->p_next;
-            }
-            terminateProc(child);   
-        }
+void terminateProc(pcb_PTR curr){
+    while(!emptyChild(curr){
+	terminateProc(removeChild(curr));
+    }
+/*check if in readyQueue*/
+    if(curr->p_semAdd == NULL){
+	outProcQ(&readyQueue, curr);
+    }
+/*check if its the current proccess*/
+    if(currentProc == curr){
+	outChild(curr);
+    }
+/*this bitch hiding in semaphores*/
+    else{
+	int* semdAdd = curr->p_semAdd;
+	outBlocked(curr);
+	if( semdAdd >= semDevices[ZERO] && semdAdd <= semDevices[DEVNUM]{
+	    softBlockCount ---;
+	}
+	else{
+	    semdAdd ++;	
+	}
+	
+    }
+    freePcb(prnt);
+    processCount -= ONE;
 }
 
 void pass(state_PTR curr){
-    semdAdd = curr->s_a1;
-    semdAdd +- ONE;
+    int* semdAdd = curr->s_a1;
+    semdAdd --;
     if(semdAdd<0){
 	/* we need to copy the previous state into current state */
         insertBlocked(semdAdd, currentProc);
@@ -117,8 +131,8 @@ void pass(state_PTR curr){
 }
 
 void ver(state_PTR curr){
-    semdAdd = curr->s_a1;
-    semdAdd += ONE;
+    int* semdAdd = curr->s_a1;
+    semdAdd ++;
 
     if(semdAdd<=0){
         pcb_PTR temp = removeBlocked(semdAdd);
@@ -132,7 +146,7 @@ void waitForIO(state_PTR curr){
     int lineNo = curr->s_a1;
     int devNo = curr->s_a2;
     int waitterm = curr->s_a3;
-    int devi = ((lineNo) * (devNo + DEVADD));
+    int devi = ((lineNo) * (devNo-TWO));
     semDevices[devi]++;
     softBlockCount++;
     insertBlocked(&devi, currentProc);
@@ -142,12 +156,15 @@ void waitForIO(state_PTR curr){
 void getCPUTime(state_PTR curr){
     int time;
     STCK(time);
+    time -= startTOD;
     currentProc->p_time = time;
     incrementPC();
 }
 
 void waitForClock(state_PTR curr){
+    clockSem --;
     insertBlocked(clockSem, currentProc);
+    softBlockCount++;
     scheduler();
 }
 
@@ -164,12 +181,12 @@ void returnExceptionState(int returnVal){
 }
 void incrementPC(){
     state_PTR except_state = (state_PTR) BIOSDATAPAGE;
-    except_state->s_t9 = except_state->s_pc+=4;
+    except_state->s_t9 = except_state->s_pc+=PCINC;
     loadState(currentProc->p_s);   
 }
 
 void passUpOrDie(state_PTR curr){
-    if(currentProc->p_supportStruct== NULL){
+    if(currentProc->p_supportStruct == NULL){
         terminateProc(currentProc); 
     } 
     currentProc->p_supportStruct.sup_exceptState = curr;
@@ -178,7 +195,7 @@ void passUpOrDie(state_PTR curr){
 
 void stateCopy(state_PTR oldState, state_PTR newState){
     int i=0;
-    for(i=0; i<STATEREGNUN; i++){
+    for(i=0; i<STATEREGNUM; i++){
 	newState->s_reg[i] = oldState->s_reg[i];
     }
     newState->s_entryHI = oldState->s_entryHI;

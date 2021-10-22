@@ -87,7 +87,8 @@
 /* Macro to read the TOD clock */
 #define STCK(T) ((T) = ((* ((cpu_t *) TODLOADDR)) / (* ((cpu_t *) TIMESCALEADDR))))
 #define MAXPROC 20
-#define QUANTUM 100
+#define QUANTUM 100000
+#define INTERVAL 
 
 /* syscalls */
 #define CREATEPROCESS 1
@@ -102,8 +103,9 @@
 #define NUKE 0x20001000
 #define STATUSREG 0x10400000
 
-#define DEVADD 1
-#define LINESUB 2
-
+#define PCINC 4
+#define ZERO 0
 #define ONE 1
+#define TWO 2
+
 #endif

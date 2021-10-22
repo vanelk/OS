@@ -98,7 +98,7 @@ typedef struct state_t {
 #define s_ra	s_reg[28]
 #define s_HI	s_reg[29]
 #define s_LO	s_reg[30]
-typedef struct context)t{
+typedef struct context{
     unsigned int c_stackPtr,
                  c_status,
                  c_pc;

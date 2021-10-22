@@ -9,6 +9,8 @@ extern processCount;
 extern softBlockCount;
 extern startTOD;
 cpu_t timeElapsed;
+cpu_t ;
+
 /* The scheduling algorithm implemented is round-robin*/
 void scheduler(){
     /* get time how long the process has been running*/
