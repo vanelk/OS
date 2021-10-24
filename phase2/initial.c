@@ -15,7 +15,7 @@ int semDevices[DEVNUM]; /* 1 for each device available (49) in total */
 cpu_t startTOD;
 int *clockSem = &semDevices[DEVNUM-ONE];
 extern void test();
-HIDDEN void uTLB_RefillHandler();
+extern void uTLB_RefillHandler();
 HIDDEN void exceptionHandler();
 
 
@@ -59,18 +59,13 @@ int main(){
     
 }
 
-void uTLB_RefillHandler(){
-    setENTRYHI(KUSEG);
-    setENTRYLO(KSEG0);
-    TLBWR();
-    LDST((state_PTR) BIOSDATAPAGE);
-}
+
 
 void exceptionHandler(){
     state_PTR oldstate;
     oldstate = (state_PTR) BIOSDATAPAGE;
     int reason = (oldstate->s_cause >> 2) << 24;
-    if(reason == 0) interuptIOTrap();
+    if(reason == 0) IOHandler();
     if(reason <= 7) otherExceptions();
     if(reason == 8) SYSCALLHandler();
 

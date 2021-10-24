@@ -6,39 +6,37 @@
 #include "../h/exceptions.h"
 #include "../h/initial.h"
 
-extern semDevices;
-extern readyQueue;
-extern currentProc;
-extern softBlockCount;
-extern clockSem;
-extern stateCopy(state_PTR oldState, state_PTR newState);
+extern int semDevices[DEVNUM];
+extern pcb_PTR readyQueue;
+extern pcb_PTR currentProc;
+extern int softBlockCount;
+extern int * clockSem;
+extern cpu_t startTOD;
+extern void stateCopy(state_PTR oldState, state_PTR newState);
+cpu_t stopTOD;
+
 void IOHandler(){
     state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
     int ip_bits = (exception_state->s_cause >> 8) << 16;
     int intlNo = 0;
     if(ip_bits & 1){
-        /*Todo: ACK the PLT interrupt by loading the timer with a new value*/
-        stateCopy(&(currentProc->p_s), exception_state);
-        insertProcQ(&readyQueue, currentProc);
-        scheduler();
+       PANIC();
     } else if (ip_bits & 2) {
-        /* ACK the interrupt*/
+        prepToSwitch();
+    } else if (ip_bits & 4) {
+        /* ACK the interrupt */
         LDIT(QUANTUM);
         pcb_PTR proc = removeBlocked(clockSem);
-        /* Unblock all processes on the pseudo-clock*/
+        /* Unblock all processes on the pseudo-clock */
         while (proc!=NULL)
         {
             insertProcQ(&readyQueue, proc);
             pcb_PTR proc = removeBlocked(clockSem);
         }
-        /* reset clock semaphore*/
-        clockSem = 0;
-        /*load bios state*/
-        LDST(exception_state);
-        
-    } else if (ip_bits & 4) {
-        intlNo = 2;
-    } else if (ip_bits & 8) {
+        /* reset clock semaphore */
+        *clockSem = 0;
+        prepToSwitch();
+    } else if (ip_bits & 8) { 
         intlNo = 3;
     } else if (ip_bits & 16) {
         intlNo = 4;
@@ -107,8 +105,16 @@ void IOHandler(){
             }
         }
         /* probably do a reschedule? since we need to think about the time*/
-        LDST(exception_state);
+        prepToSwitch();
     }
 
+}
 
+void prepToSwitch(){
+    state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
+    if(currentProc!=NULL){
+        stateCopy(&currentProc->p_s, exception_state);
+        insertProcQ(&readyQueue, currentProc);
+    }
+    scheduler();
 }

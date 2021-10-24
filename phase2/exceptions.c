@@ -6,28 +6,29 @@
 #include "../h/exceptions.h"
 #include "../h/initial.h"
 
-extern currentProc;
-extern readyQueue;
-extern processCount;
-extern softBlockCount;
-extern semDevices;
-extern loadState;
-extern startTOD;
-extern clockSem;
+extern pcb_PTR currentProc;
+extern pcb_PTR readyQueue;
+extern int processCount;
+extern int softBlockCount;
+extern int semDevices[DEVNUM];
+extern cpu_t startTOD;
+extern int * clockSem;
+extern void loadState(state_PTR ps);
 
-HIDDEN int createProc(state_PTR curr);
-HIDDEN void terminateProc(pcb_PTR prnt);
-HIDDEN void pass(state_PTR curr);
-HIDDEN void ver(state_PTR curr);
-HIDDEN void waitForIO(state_PTR curr);
-HIDDEN void getCPUTime(state_PTR curr);
-HIDDEN void waitForClock(state_PTR curr);
-HIDDEN void getSupport(state_PTR curr);
-HIDDEN void passUpOrDie(state_PTR curr);
-void stateCopy(state_PTR oldState, state_PTR newState);
+int createProc(state_PTR curr);
+void terminateProc(pcb_PTR prnt);
+void pass(state_PTR curr);
+void ver(state_PTR curr);
+void waitForIO(state_PTR curr);
+void getCPUTime(state_PTR curr);
+void waitForClock(state_PTR curr);
+void getSupport(state_PTR curr);
+void passUpOrDie(state_PTR curr);
+
+void otherExceptions();
 void pgrmTrap();
 void tblTrab();
-
+void stateCopy(state_PTR oldState, state_PTR newState);
 void SYSCALLHandler(){
     state_PTR ps = (state_PTR) BIOSDATAPAGE;
     switch (ps->s_a0)
@@ -77,7 +78,7 @@ int createProc(state_PTR curr){
     if(child != NULL){
         insertChild(currentProc, child);
         insertProcQ(readyQueue, child);
-        copyState(curr->s_s1, &(child->p_s));
+        stateCopy(curr->s_s1, &(child->p_s));
         if(curr->s_a2 != 0 || curr->s_a2 != NULL){
             child->p_supportStruct = (support_t *) curr->s_a2;
         } else {
@@ -123,7 +124,7 @@ void pass(state_PTR curr){
     int* semdAdd = curr->s_a1;
     *semdAdd --;
     if(semdAdd<0){
-	copyState(ps, &(currentProcess->p_s));
+	stateCopy(curr, &(currentProc->p_s));
         insertBlocked(semdAdd, currentProc);
         scheduler();
     }
@@ -143,11 +144,11 @@ void ver(state_PTR curr){
     incrementPC();
 }
 void waitForIO(state_PTR curr){
-    copyState(ps, &(currentProcess->p_s));
+    stateCopy(curr, &(currentProc->p_s));
     int lineNo = curr->s_a1;
     int devNo = curr->s_a2;
     int waitterm = curr->s_a3;
-    int devi = ((lineNo) * (devNo-TWO));
+    int devi = ((lineNo - 3) * DEVPERINT + devNo);
     semDevices[devi]++;
     softBlockCount++;
     insertBlocked(&devi, currentProc);
@@ -155,7 +156,7 @@ void waitForIO(state_PTR curr){
 }
 
 void getCPUTime(state_PTR curr){
-    copyState(ps, &(currentProcess->p_s));
+    stateCopy(curr, &(currentProc->p_s));
     int time;
     STCK(time);
     time -= startTOD;
@@ -164,7 +165,7 @@ void getCPUTime(state_PTR curr){
 }
 
 void waitForClock(state_PTR curr){
-    copyState(ps, &(currentProcess->p_s));
+    stateCopy(curr, &(currentProc->p_s));
     clockSem --;
     insertBlocked(clockSem, currentProc);
     softBlockCount++;
@@ -185,15 +186,18 @@ void returnExceptionState(int returnVal){
 void incrementPC(){
     state_PTR except_state = (state_PTR) BIOSDATAPAGE;
     except_state->s_t9 = except_state->s_pc+=PCINC;
-    loadState(currentProc->p_s);   
+    loadState(&currentProc->p_s);   
 }
 
 void passUpOrDie(state_PTR curr){
     if(currentProc->p_supportStruct == NULL){
         terminateProc(currentProc); 
-    } 
-    currentProc->p_supportStruct.sup_exceptState = curr;
-    LDCXT(currentProc->p_supportStruct.sup_exceptContext);   
+    }
+    /* was: 
+    currentProc->p_supportStruct->sup_exceptState[0] = *curr;
+    */ 
+    stateCopy(curr, &currentProc->p_s);
+    LDCXT(currentProc->p_supportStruct->sup_exceptContext);   
 }
 
 void stateCopy(state_PTR oldState, state_PTR newState){
@@ -207,3 +211,6 @@ void stateCopy(state_PTR oldState, state_PTR newState){
     newState->s_pc = oldState->s_pc;
 }
 
+void otherExceptions(){
+    passUpOrDie((state_PTR) BIOSDATAPAGE);
+}

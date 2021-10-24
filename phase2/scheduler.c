@@ -4,13 +4,12 @@
 #include "../h/asl.h"
 #include "../h/scheduler.h"
 #include "../h/initial.h"
-extern currentProc;
-extern readyQueue;
-extern processCount;
-extern softBlockCount;
-extern startTOD;
+extern pcb_PTR currentProc;
+extern pcb_PTR readyQueue;
+extern int processCount;
+extern int softBlockCount;
+extern cpu_t startTOD;
 cpu_t timeElapsed;
-cpu_t ;
 
 /* The scheduling algorithm implemented is round-robin*/
 void scheduler(){
