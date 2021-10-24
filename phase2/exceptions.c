@@ -4,6 +4,7 @@
 #include "../h/asl.h"
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
+#include "../h/initial.h"
 
 extern currentProc;
 extern readyQueue;
@@ -23,6 +24,7 @@ HIDDEN void getCPUTime(state_PTR curr);
 HIDDEN void waitForClock(state_PTR curr);
 HIDDEN void getSupport(state_PTR curr);
 HIDDEN void passUpOrDie(state_PTR curr);
+void stateCopy(state_PTR oldState, state_PTR newState);
 void pgrmTrap();
 void tblTrab();
 
@@ -75,7 +77,7 @@ int createProc(state_PTR curr){
     if(child != NULL){
         insertChild(currentProc, child);
         insertProcQ(readyQueue, child);
-        child->p_s = *((state_PTR) curr->s_a1);
+        copyState(curr->s_s1, &(child->p_s));
         if(curr->s_a2 != 0 || curr->s_a2 != NULL){
             child->p_supportStruct = (support_t *) curr->s_a2;
         } else {
@@ -114,14 +116,14 @@ void terminateProc(pcb_PTR curr){
         
     }
     freePcb(curr);
-    processCount -= ONE;
+    processCount --;
 }
 
 void pass(state_PTR curr){
     int* semdAdd = curr->s_a1;
-    semdAdd --;
+    *semdAdd --;
     if(semdAdd<0){
-	/* we need to copy the previous state into current state */
+	copyState(ps, &(currentProcess->p_s));
         insertBlocked(semdAdd, currentProc);
         scheduler();
     }
@@ -130,7 +132,7 @@ void pass(state_PTR curr){
 
 void ver(state_PTR curr){
     int* semdAdd = curr->s_a1;
-    semdAdd ++;
+    *semdAdd ++;
 
     if(semdAdd<=0){
         pcb_PTR temp = removeBlocked(semdAdd);
@@ -141,6 +143,7 @@ void ver(state_PTR curr){
     incrementPC();
 }
 void waitForIO(state_PTR curr){
+    copyState(ps, &(currentProcess->p_s));
     int lineNo = curr->s_a1;
     int devNo = curr->s_a2;
     int waitterm = curr->s_a3;
@@ -152,6 +155,7 @@ void waitForIO(state_PTR curr){
 }
 
 void getCPUTime(state_PTR curr){
+    copyState(ps, &(currentProcess->p_s));
     int time;
     STCK(time);
     time -= startTOD;
@@ -160,6 +164,7 @@ void getCPUTime(state_PTR curr){
 }
 
 void waitForClock(state_PTR curr){
+    copyState(ps, &(currentProcess->p_s));
     clockSem --;
     insertBlocked(clockSem, currentProc);
     softBlockCount++;

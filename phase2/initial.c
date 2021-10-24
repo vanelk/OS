@@ -15,6 +15,8 @@ int semDevices[DEVNUM]; /* 1 for each device available (49) in total */
 cpu_t startTOD;
 int *clockSem = &semDevices[DEVNUM-ONE];
 extern void test();
+HIDDEN void uTLB_RefillHandler();
+HIDDEN void exceptionHandler();
 
 
 

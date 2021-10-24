@@ -3,6 +3,7 @@
 #include "../h/pcb.h"
 #include "../h/asl.h"
 #include "../h/scheduler.h"
+#include "../h/initial.h"
 extern currentProc;
 extern readyQueue;
 extern processCount;

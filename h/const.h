@@ -106,6 +106,8 @@
 #define PCINC 4
 #define ZERO 0
 #define ONE 1
-#define TWO 2
+#define ON 1
+#define OFF 0
+#define ALLOFF 0
 
 #endif

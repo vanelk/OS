@@ -4,35 +4,36 @@
 #include "../h/asl.h"
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
+#include "../h/initial.h"
 
 extern semDevices;
 extern readyQueue;
 extern currentProc;
 extern softBlockCount;
 extern clockSem;
-extern stateCopy();
+extern stateCopy(state_PTR oldState, state_PTR newState);
 void IOHandler(){
     state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
     int ip_bits = (exception_state->s_cause >> 8) << 16;
     int intlNo = 0;
     if(ip_bits & 1){
-        //Todo: ACK the PLT interrupt by loading the timer with a new value
-        stateCopy(&currentProc->p_s, exception_state);
+        /*Todo: ACK the PLT interrupt by loading the timer with a new value*/
+        stateCopy(&(currentProc->p_s), exception_state);
         insertProcQ(&readyQueue, currentProc);
         scheduler();
     } else if (ip_bits & 2) {
-        // ACK the interrupt
+        /* ACK the interrupt*/
         LDIT(QUANTUM);
         pcb_PTR proc = removeBlocked(clockSem);
-        // Unblock all processes on the pseudo-clock
+        /* Unblock all processes on the pseudo-clock*/
         while (proc!=NULL)
         {
             insertProcQ(&readyQueue, proc);
             pcb_PTR proc = removeBlocked(clockSem);
         }
-        // reset clock semaphore
-        *clockSem = 0;
-        // load bios state
+        /* reset clock semaphore*/
+        clockSem = 0;
+        /*load bios state*/
         LDST(exception_state);
         
     } else if (ip_bits & 4) {
@@ -108,5 +109,6 @@ void IOHandler(){
         /* probably do a reschedule? since we need to think about the time*/
         LDST(exception_state);
     }
+
 
 }
