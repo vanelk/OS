@@ -4,7 +4,7 @@
 #include "../h/asl.h"
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
-
+#include "../h/interrupts.h"
 
 /* Global variables */
 int processCount; /* number of processes on the readyQueue */
@@ -41,6 +41,8 @@ int main(){
     softBlockCount = 0;
     readyQueue = mkEmptyProcQ();
     currentProc = allocPcb();
+    int i;
+    for(i=0; i<DEVNUM; i++)  semDevices[i] = ZERO;
     if(currentProc!= NULL){
         currentProc->p_s.s_pc = currentProc->p_s.s_t9 = (memaddr) test;
         currentProc->p_s.s_status = STATUSREG;
@@ -48,8 +50,8 @@ int main(){
         currentProc->p_supportStruct = NULL;
         insertProcQ(&readyQueue, currentProc);
         processCount++;
-        LDIT(100);
-
+        LDIT(QUANTUM);
+        currentProc = NULL;
         scheduler();
 
     } else {

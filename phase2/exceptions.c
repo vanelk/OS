@@ -108,11 +108,11 @@ void terminateProc(pcb_PTR curr){
         else{
         int* semdAdd = curr->p_semAdd;
         outBlocked(curr);
-        if( semdAdd >= semDevices[ZERO] && semdAdd <= semDevices[DEVNUM]){
+        if( semdAdd >= &semDevices[ZERO] && semdAdd <= &semDevices[DEVNUM]){
             softBlockCount--;
         }
         else{
-            semdAdd++;	
+            (*semdAdd)++;	
         }
         
     }

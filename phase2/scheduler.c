@@ -4,19 +4,17 @@
 #include "../h/asl.h"
 #include "../h/scheduler.h"
 #include "../h/initial.h"
-extern pcb_PTR currentProc;
-extern pcb_PTR readyQueue;
-extern int processCount;
-extern int softBlockCount;
-extern cpu_t startTOD;
+
 cpu_t timeElapsed;
 
 /* The scheduling algorithm implemented is round-robin*/
 void scheduler(){
-    /* get time how long the process has been running*/
-    STCK(timeElapsed);
-    /* Set time of current cpu */
-    currentProc->p_time = currentProc->p_time + (timeElapsed - startTOD);
+    if(currentProc!=NULL){
+        /* get time how long the process has been running*/
+        STCK(timeElapsed);
+        /* Set time of current cpu */
+        currentProc->p_time = currentProc->p_time + (timeElapsed - startTOD);
+    }
     /* remove next process from the ready queue */
     pcb_PTR next = removeProcQ(&readyQueue);
     /* check if the proccess exists */
@@ -24,7 +22,7 @@ void scheduler(){
         /* set currentproc to the next process */
         currentProc = next;
         LDIT(startTOD);
-        loadState(&currentProc->p_s);
+        loadState(&(currentProc->p_s));
     }
     if(processCount == 0){
         HALT();
