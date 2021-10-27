@@ -103,6 +103,11 @@
 #define NUKE 0x20001000
 #define STATUSREG 0x10400000
 
+#define ALLOFF 0x00000000
+#define IEON 0x00000004
+#define IMON 0x0000FF00
+#define TEBITON 0x08000000
+
 #define PCINC 4
 #define ZERO 0
 #define ONE 1
