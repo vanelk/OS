@@ -24,22 +24,24 @@ void scheduler(){
     if (next != NULL){
         /* set currentproc to the next process */
         currentProc = next;
+        STCK(startTOD);
         setTIMER(TIMESCALE);
         LDST(&(currentProc->p_s));
-    }
-    
-    if(processCount == 0){
-        HALT();
-    }
-    if(processCount > 0){
-        if (softBlockCount > 0){
-            /* we wait with Interrupts and execeptions on */
-            int mask = ALLOFF | IEON | IECON | IMON;
-            setSTATUS(mask);
-            WAIT();
-        } 
-        if (softBlockCount == 0) PANIC();
+    } else {
+        /* if there is no process in the ready queue, set currentproc to null */
+        if(processCount == 0){
+            HALT();
+        }
+        if(processCount > 0){
+            if (softBlockCount > 0){
+                /* we wait with Interrupts and execeptions on */
+                int mask = ALLOFF | IEON | IECON | IMON;
+                setSTATUS(mask);
+                WAIT();
+            } 
+            if (softBlockCount == 0) PANIC();
 
+        }
     }
 }
 
