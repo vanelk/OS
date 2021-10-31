@@ -35,7 +35,7 @@ void scheduler(){
         if(processCount > 0){
             if (softBlockCount > 0){
                 /* we wait with Interrupts and execeptions on */
-                int mask = ALLOFF | IEON | IECON | IMON;
+                int mask = ALLOFF | IECON | IMON;
                 setSTATUS(mask);
                 WAIT();
             } 
