@@ -105,6 +105,7 @@
 
 #define ALLOFF 0x00000000
 #define IEON 0x00000004
+#define IECON	0x00000001
 #define IMON 0x0000FF00
 #define TEBITON 0x08000000
 
@@ -113,6 +114,5 @@
 #define ONE 1
 #define ON 1
 #define OFF 0
-#define ALLOFF 0
-
+#define TIMESCALE 5000
 #endif

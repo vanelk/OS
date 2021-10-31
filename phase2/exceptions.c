@@ -15,7 +15,7 @@ extern cpu_t startTOD;
 extern int * clockSem;
 extern void loadState(state_PTR ps);
 
-int createProc(state_PTR curr);
+void createProc(state_PTR curr);
 void terminateProc(pcb_PTR prnt);
 void pass(state_PTR curr);
 void ver(state_PTR curr);
@@ -31,10 +31,13 @@ void tblTrab();
 void stateCopy(state_PTR oldState, state_PTR newState);
 void SYSCALLHandler(){
     state_PTR ps = (state_PTR) BIOSDATAPAGE;
+    /* add 4 to pc */
+    ps->s_t9 = ps->s_pc = ps->s_pc+PCINC;
+    debug(ps->s_a0, 1);
     switch (ps->s_a0)
     {
     case CREATEPROCESS:{
-        returnExceptionState(createProc(ps));
+        createProc(ps);
         break;}
     
     case TERMINATEPROCESS:{
@@ -72,13 +75,13 @@ void SYSCALLHandler(){
     }
 }
 /* Utility function takes in parent process*/
-int createProc(state_PTR curr){
+void createProc(state_PTR curr){
     pcb_PTR child = allocPcb();
     int returnStatus = -1;
     if(child != NULL){
         insertChild(currentProc, child);
-        insertProcQ(readyQueue, child);
-        stateCopy(curr->s_s1, &(child->p_s));
+        insertProcQ(&readyQueue, child);
+        stateCopy((state_PTR) curr->s_a1, &(child->p_s));
         if(curr->s_a2 != 0 || curr->s_a2 != NULL){
             child->p_supportStruct = (support_t *) curr->s_a2;
         } else {
@@ -89,7 +92,8 @@ int createProc(state_PTR curr){
         processCount++;
         returnStatus = 0;
     }
-    return returnStatus;
+    currentProc->p_s.s_v0 = returnStatus;
+    loadState(curr);   
 }
 
 void terminateProc(pcb_PTR curr){
@@ -122,36 +126,36 @@ void terminateProc(pcb_PTR curr){
 
 void pass(state_PTR curr){
     int* semdAdd = curr->s_a1;
-    *semdAdd --;
+    (*semdAdd)--;
     if(semdAdd<0){
-	stateCopy(curr, &(currentProc->p_s));
+	    stateCopy(curr, &(currentProc->p_s));
         insertBlocked(semdAdd, currentProc);
         scheduler();
     }
-    incrementPC();
+    loadState(curr);   
 }
 
 void ver(state_PTR curr){
     int* semdAdd = curr->s_a1;
-    *semdAdd ++;
-
-    if(semdAdd<=0){
+    (*semdAdd)++;
+    if(*semdAdd>=0){
         pcb_PTR temp = removeBlocked(semdAdd);
-	if(temp != NULL) {
-        insertProcQ(&readyQueue, temp);
-	}
+        if(temp != NULL) {
+            insertProcQ(&readyQueue, temp);
+        }
     }
-    incrementPC();
+    loadState(curr);
 }
 void waitForIO(state_PTR curr){
     stateCopy(curr, &(currentProc->p_s));
     int lineNo = curr->s_a1;
     int devNo = curr->s_a2;
     int waitterm = curr->s_a3;
-    int devi = ((lineNo - 3) * DEVPERINT + devNo);
-    semDevices[devi]++;
+    int devi = ((lineNo - 3 + waitterm) * DEVPERINT + devNo);
+    semDevices[devi]--;
     softBlockCount++;
-    insertBlocked(&devi, currentProc);
+    insertBlocked(&(semDevices[devi]), currentProc);
+    currentProc = NULL;
     scheduler();
 }
 
@@ -161,42 +165,35 @@ void getCPUTime(state_PTR curr){
     STCK(time);
     time -= startTOD;
     currentProc->p_time = time;
-    incrementPC();
+    stateCopy(curr, &(currentProc->p_s));
+    loadState(&currentProc->p_s);   
 }
 
 void waitForClock(state_PTR curr){
     stateCopy(curr, &(currentProc->p_s));
-    clockSem --;
+    (*clockSem)--;
     insertBlocked(clockSem, currentProc);
     softBlockCount++;
+    currentProc = NULL;
     scheduler();
 }
 
 void getSupport(state_PTR curr){
-    returnExceptionState(currentProc->p_supportStruct);
-}
-
-void returnExceptionState(int returnVal){
-        state_PTR except_state;
-        except_state = (state_PTR) BIOSDATAPAGE;
-        except_state->s_v0 = returnVal;
-        /* add 4 to pc */
-        incrementPC();
-}
-void incrementPC(){
-    state_PTR except_state = (state_PTR) BIOSDATAPAGE;
-    except_state->s_t9 = except_state->s_pc+=PCINC;
+    currentProc->p_s.s_v0 = currentProc->p_supportStruct;
+    stateCopy(curr, &(currentProc->p_s));
     loadState(&currentProc->p_s);   
 }
 
+
 void passUpOrDie(state_PTR curr){
-    if(currentProc->p_supportStruct == NULL){
+    if(currentProc->p_supportStruct != NULL){
         terminateProc(currentProc); 
     }
     /* was: 
-    currentProc->p_supportStruct->sup_exceptState[0] = *curr;
-    */ 
-    stateCopy(curr, &currentProc->p_s);
+    currentProc->p_supportStruct->sup_exceptState = *curr;
+    */
+    
+    stateCopy(curr, &(currentProc->p_supportStruct->sup_exceptState[0]));
     LDCXT(currentProc->p_supportStruct->sup_exceptContext);   
 }
 

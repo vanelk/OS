@@ -14,22 +14,31 @@ void scheduler(){
         STCK(timeElapsed);
         /* Set time of current cpu */
         currentProc->p_time = currentProc->p_time + (timeElapsed - startTOD);
+        LDIT(startTOD);
     }
     /* remove next process from the ready queue */
     pcb_PTR next = removeProcQ(&readyQueue);
+    debug(next, -1);
     /* check if the proccess exists */
+    
     if (next != NULL){
         /* set currentproc to the next process */
         currentProc = next;
-        LDIT(startTOD);
-        loadState(&(currentProc->p_s));
+        setTIMER(TIMESCALE);
+        LDST(&(currentProc->p_s));
     }
+    
     if(processCount == 0){
         HALT();
     }
     if(processCount > 0){
-        if (softBlockCount > 0) WAIT();
-        if(softBlockCount == 0) PANIC();
+        if (softBlockCount > 0){
+            /* we wait with Interrupts and execeptions on */
+            int mask = ALLOFF | IEON | IECON | IMON;
+            setSTATUS(mask);
+            WAIT();
+        } 
+        if (softBlockCount == 0) PANIC();
 
     }
 }

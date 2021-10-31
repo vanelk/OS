@@ -17,11 +17,12 @@ cpu_t stopTOD;
 
 void IOHandler(){
     state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
-    int ip_bits = (exception_state->s_cause >> 8) << 16;
+    int ip_bits = ((exception_state->s_cause & 0x00FF00)>> 8);
     int intlNo = 0;
     if(ip_bits & 1){
        PANIC();
     } else if (ip_bits & 2) {
+        setTIMER(TIMESCALE);
         prepToSwitch();
     } else if (ip_bits & 4) {
         /* ACK the interrupt */
@@ -32,6 +33,7 @@ void IOHandler(){
         {
             insertProcQ(&readyQueue, proc);
             pcb_PTR proc = removeBlocked(clockSem);
+            softBlockCount--;
         }
         /* reset clock semaphore */
         *clockSem = 0;
@@ -68,8 +70,9 @@ void IOHandler(){
         devNo = 7;
     }
     /* Non timer interrupts */
+    debug(intlNo, 2);
     if( intlNo >= 3){
-        int devIdx = (intlNo - 3) * 10 + devNo;
+        int devi = (intlNo - 3) * DEVPERINT + devNo;
         /* calculate the device address */
         int devAddrbase = 0x10000054 + ((intlNo -3) * 0x80) + (devNo * 0x10);
         /* Get the device from the device address */
@@ -78,14 +81,15 @@ void IOHandler(){
         /* terminal device */
         if (intlNo == 7){
             /* ready state for transmit*/
-            if(dev->t_transm_status & 16){
+            if(dev->t_transm_command & 15){
                 /* ACK the command */
-                dev->t_transm_command = ACK;
                 statusCp = dev->t_transm_status;
+                dev->t_transm_command = ACK;
             } else {
+                statusCp = dev->t_recv_status;
                 /* ACK the recieve command */
                 dev->t_recv_command = ACK;
-                statusCp = dev->t_recv_status;
+                devi+=DEVPERINT;
             }
         } else {
             /* Store the status code from the device register */
@@ -94,13 +98,13 @@ void IOHandler(){
             dev->d_command = ACK;
         }
         /* Do a V on the dev sem for current device */
-        int * semad = &semDevices[devIdx];
-        (*semad)+=ONE;
-        if(semad<=ZERO){
+        int *semad = &semDevices[devi];
+        (*semad)++;
+        if(*semad>=ZERO){
             pcb_PTR proc = removeBlocked(semad);
             if(proc!=NULL){
                 proc->p_s.s_v0 = statusCp;
-                softBlockCount-=ONE;
+                softBlockCount--;
                 insertProcQ(&readyQueue, proc);
             }
         }

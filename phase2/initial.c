@@ -7,7 +7,7 @@
 #include "../h/interrupts.h"
 
 /* Global variables */
-int processCount; /* number of processes on the readyQueue */
+int processCount; /* number of processes of created processes still active */
 int softBlockCount; /* number of processes waiting for IO */
 pcb_PTR readyQueue; /* pointer to the ready queue */
 pcb_PTR currentProc; /* pointer to the current process*/
@@ -18,8 +18,9 @@ extern void test();
 extern void uTLB_RefillHandler();
 HIDDEN void exceptionHandler();
 
-
-
+void debug(int a, int b){
+    int i = 2+4;
+}
 int main(){
     /*initialize PCB and ASL*/
     initPcbs();
@@ -29,7 +30,7 @@ int main(){
     int TopOfRAM = (devBus->rambase + devBus->ramsize); /*set top of ram memory address*/
     /* populate processor 0 passup vector. */
     passupvector_t* nuke = (passupvector_t *) PASSUPVECTOR;
-    nuke->tlb_refll_handler = (memaddr) uTLB_RefillHandler; /* to be  implemented */
+    nuke->tlb_refll_handler = (memaddr) uTLB_RefillHandler;
     /* setting the stack pointer for the nucleus TBL-refill event handler to top of nucleus stack page */
     nuke->exception_stackPtr = NUKE; 
     nuke->exception_handler = (memaddr) exceptionHandler;
@@ -46,7 +47,7 @@ int main(){
     if(currentProc!= NULL){
         currentProc->p_s.s_pc = currentProc->p_s.s_t9 = (memaddr) test;
         currentProc->p_s.s_status = ALLOFF | IEON | IMON | TEBITON;
-        currentProc->p_s.s_sp = (TopOfRAM - PAGESIZE);
+        currentProc->p_s.s_sp = TopOfRAM;
         currentProc->p_supportStruct = NULL;
         insertProcQ(&readyQueue, currentProc);
         processCount++;
@@ -62,11 +63,10 @@ int main(){
 }
 
 
-
 void exceptionHandler(){
     state_PTR oldstate;
     oldstate = (state_PTR) BIOSDATAPAGE;
-    int reason = (oldstate->s_cause >> 2) << 24;
+    int reason = ((oldstate->s_cause & 0x0000007c) >> 2);
     if(reason == 0) IOHandler();
     if(reason <= 7) otherExceptions();
     if(reason == 8) SYSCALLHandler();
