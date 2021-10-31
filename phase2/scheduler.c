@@ -18,7 +18,6 @@ void scheduler(){
     }
     /* remove next process from the ready queue */
     pcb_PTR next = removeProcQ(&readyQueue);
-    debug(next, -1);
     /* check if the proccess exists */
     
     if (next != NULL){

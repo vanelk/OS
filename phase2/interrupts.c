@@ -70,7 +70,6 @@ void IOHandler(){
         devNo = 7;
     }
     /* Non timer interrupts */
-    debug(intlNo, 2);
     if( intlNo >= 3){
         int devi = (intlNo - 3) * DEVPERINT + devNo;
         /* calculate the device address */

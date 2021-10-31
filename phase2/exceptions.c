@@ -33,7 +33,6 @@ void SYSCALLHandler(){
     state_PTR ps = (state_PTR) BIOSDATAPAGE;
     /* add 4 to pc */
     ps->s_t9 = ps->s_pc = ps->s_pc+PCINC;
-    debug(ps->s_a0, 1);
     switch (ps->s_a0)
     {
     case CREATEPROCESS:{
@@ -127,16 +126,16 @@ void terminateProc(pcb_PTR curr){
 void pass(state_PTR curr){
     int* semdAdd = curr->s_a1;
     (*semdAdd)--;
-    if(semdAdd<0){
+    if(*semdAdd<0){
 	    stateCopy(curr, &(currentProc->p_s));
-        insertBlocked(semdAdd, currentProc);
+        if(insertBlocked(semdAdd, currentProc)) PANIC();
         scheduler();
     }
     loadState(curr);   
 }
 
 void ver(state_PTR curr){
-    int* semdAdd = curr->s_a1;
+    int* semdAdd = (int *) curr->s_a1;
     (*semdAdd)++;
     if(*semdAdd>=0){
         pcb_PTR temp = removeBlocked(semdAdd);
