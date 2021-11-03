@@ -29,6 +29,7 @@ void otherExceptions();
 void pgrmTrap();
 void tblTrab();
 void stateCopy(state_PTR oldState, state_PTR newState);
+
 void SYSCALLHandler(){
     state_PTR ps = (state_PTR) BIOSDATAPAGE;
     /* add 4 to pc */
@@ -127,8 +128,8 @@ void pass(state_PTR curr){
     int* semdAdd = curr->s_a1;
     (*semdAdd)--;
     if(*semdAdd<0){
-	    stateCopy(curr, &(currentProc->p_s));
-        if(insertBlocked(semdAdd, currentProc)) PANIC();
+	stateCopy(curr, &(currentProc->p_s));
+        insertBlocked(semdAdd, currentProc);
         scheduler();
     }
     loadState(curr);   
@@ -185,15 +186,15 @@ void getSupport(state_PTR curr){
 
 
 void passUpOrDie(state_PTR curr){
-    if(currentProc->p_supportStruct != NULL){
+    if(currentProc->p_supportStruct == NULL){
         terminateProc(currentProc); 
     }
     /* was: 
     currentProc->p_supportStruct->sup_exceptState = *curr;
     */
     
-    stateCopy(curr, &(currentProc->p_supportStruct->sup_exceptState[0]));
-    LDCXT(currentProc->p_supportStruct->sup_exceptContext);   
+    stateCopy(&(currentProc->p_supportStruct->sup_exceptState[0]), (state_PTR) BIOSDATAPAGE);
+    LDCXT(currentProc->p_supportStruct->sup_exceptContext[0]);   
 }
 
 void stateCopy(state_PTR oldState, state_PTR newState){

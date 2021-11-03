@@ -100,15 +100,19 @@
 #define WAITCLOCK 7
 #define GETSUPPORTPTR 8
 
+/* important places */
 #define NUKE 0x20001000
 #define STATUSREG 0x10400000
 
+/* bit operations */
 #define ALLOFF 0x00000000
 #define IEON 0x00000004
 #define IECON	0x00000001
 #define IMON 0x0000FF00
 #define TEBITON 0x08000000
+#define UMOFF
 
+/*extra useful numbers */
 #define PCINC 4
 #define ZERO 0
 #define ONE 1
