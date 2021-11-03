@@ -136,7 +136,7 @@ void pass(state_PTR curr){
 void ver(state_PTR curr){
     int* semdAdd = (int *) curr->s_a1;
     (*semdAdd)++;
-    if(*semdAdd>=0){
+    if(*semdAdd<=0){
         pcb_PTR temp = removeBlocked(semdAdd);
         if(temp != NULL) {
             insertProcQ(&readyQueue, temp);
