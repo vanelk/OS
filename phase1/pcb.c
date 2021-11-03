@@ -72,6 +72,7 @@ pcb_PTR removeProcQ(pcb_PTR *tp)
 
         pcb_PTR remove = tail->p_prev;
         tail->p_prev = remove->p_prev;
+        tail->p_next = remove->p_next;
         return remove;
     }
 }
@@ -87,6 +88,7 @@ pcb_PTR outProcQ(pcb_PTR *tp, pcb_PTR p)
 {
     pcb_PTR tail = *tp;
     pcb_PTR current = tail;
+    if(emptyProcQ(*tp)) return NULL;
     if(p->p_prev == NULL && p->p_next == NULL) return NULL;
     while (1)
     {

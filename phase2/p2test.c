@@ -290,7 +290,10 @@ void test() {
 	print("error: p1 still alive after progtrap & no trap vector\n");
 	PANIC();					/* PANIC !!!     */
 }
-
+void debugT(int a, int b){
+	int i = 0;
+	i++;
+}
 
 /* p2 -- semaphore and cputime-SYS test process */
 void p2() {
@@ -320,7 +323,7 @@ void p2() {
 
 	STCK(now1);				/* time of day   */
 	cpu_t1 = SYSCALL(GETCPUTIME, 0, 0, 0);			/* CPU time used */
-
+	debugT(cpu_t1, now1);
 	/* delay for several milliseconds */
 	for (i=1; i < LOOPNUM; i++)
 		;
