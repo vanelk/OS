@@ -87,7 +87,8 @@
 /* Macro to read the TOD clock */
 #define STCK(T) ((T) = ((* ((cpu_t *) TODLOADDR)) / (* ((cpu_t *) TIMESCALEADDR))))
 #define MAXPROC 20
-#define QUANTUM 100000
+#define IOCLOCK 100000
+#define QUANTUM 5000
 #define INTERVAL 
 
 /* syscalls */
@@ -118,5 +119,5 @@
 #define ONE 1
 #define ON 1
 #define OFF 0
-#define TIMESCALE 5000
+
 #endif

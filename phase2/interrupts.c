@@ -22,11 +22,11 @@ void IOHandler(){
     if(ip_bits & 1){
        PANIC();
     } else if (ip_bits & 2) {
-        setTIMER(TIMESCALE);
+        setTIMER(QUANTUM);
         prepToSwitch();
     } else if (ip_bits & 4) {
         /* ACK the interrupt */
-        LDIT(QUANTUM);
+        LDIT(IOCLOCK);
         pcb_PTR proc = removeBlocked(clockSem);
         /* Unblock all processes on the pseudo-clock */
         while (proc!=NULL)

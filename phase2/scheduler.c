@@ -14,7 +14,7 @@ void scheduler(){
         STCK(timeElapsed);
         /* Set time of current cpu */
         currentProc->p_time = currentProc->p_time + (timeElapsed - startTOD);
-        LDIT(startTOD);
+        /*LDIT(startTOD);*/
     }
     /* remove next process from the ready queue */
     pcb_PTR next = removeProcQ(&readyQueue);
@@ -24,7 +24,7 @@ void scheduler(){
         /* set currentproc to the next process */
         currentProc = next;
         STCK(startTOD);
-        setTIMER(TIMESCALE);
+        setTIMER(QUANTUM);
         LDST(&(currentProc->p_s));
     } else {
         /* if there is no process in the ready queue, set currentproc to null */
