@@ -130,6 +130,7 @@ void pass(state_PTR curr){
         insertBlocked(semdAdd, currentProc);
         scheduler();
     }
+    stateCopy(curr, &(currentProc->p_s));
     loadState(curr);   
 }
 
