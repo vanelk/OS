@@ -165,7 +165,7 @@ void getCPUTime(state_PTR curr){
     STCK(time);
     time -= startTOD;
     currentProc->p_time = time;
-    stateCopy(curr, &(currentProc->p_s));
+    currentProc->p_s.s_v0 = time;
     loadState(&currentProc->p_s);   
 }
 
@@ -189,10 +189,7 @@ void passUpOrDie(state_PTR curr){
     if(currentProc->p_supportStruct == NULL){
         terminateProc(currentProc); 
     }
-    /* was: 
-    currentProc->p_supportStruct->sup_exceptState = *curr;
-    */
-    
+    /*i think we will need a switch to figure out which except state to put the biosdatapage in */
     stateCopy(&(currentProc->p_supportStruct->sup_exceptState[0]), (state_PTR) BIOSDATAPAGE);
     LDCXT(currentProc->p_supportStruct->sup_exceptContext[0]);   
 }
