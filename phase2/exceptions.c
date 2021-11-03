@@ -23,7 +23,7 @@ void waitForIO(state_PTR curr);
 void getCPUTime(state_PTR curr);
 void waitForClock(state_PTR curr);
 void getSupport(state_PTR curr);
-void passUpOrDie(state_PTR curr);
+void passUpOrDie(state_PTR curr, int exception);
 
 void otherExceptions();
 void pgrmTrap();
@@ -70,7 +70,7 @@ void SYSCALLHandler(){
         break;}
     
     default:{
-        passUpOrDie(ps);
+        passUpOrDie(ps, GENERALEXCEPT);
         break;}
     }
 }
@@ -183,13 +183,13 @@ void getSupport(state_PTR curr){
 }
 
 
-void passUpOrDie(state_PTR curr){
+void passUpOrDie(state_PTR curr, int exception){
     if(currentProc->p_supportStruct == NULL){
         terminateProc(currentProc); 
     }
     /*i think we will need a switch to figure out which except state to put the biosdatapage in */
-    stateCopy(&(currentProc->p_supportStruct->sup_exceptState[0]), curr);
-    LDCXT(currentProc->p_supportStruct->sup_exceptContext[0]);   
+    stateCopy(&(currentProc->p_supportStruct->sup_exceptState[exception]), curr);
+    LDCXT(currentProc->p_supportStruct->sup_exceptContext[exception]);   
 }
 
 void stateCopy(state_PTR oldState, state_PTR newState){
@@ -204,5 +204,5 @@ void stateCopy(state_PTR oldState, state_PTR newState){
 }
 
 void otherExceptions(){
-    passUpOrDie((state_PTR) BIOSDATAPAGE);
+    passUpOrDie((state_PTR) BIOSDATAPAGE,  GENERALEXCEPT);
 }

@@ -51,8 +51,9 @@ int main(){
         currentProc->p_supportStruct = NULL;
         insertProcQ(&readyQueue, currentProc);
         processCount++;
-        LDIT(QUANTUM);
         currentProc = NULL;
+	LDIT(IOCLOCK);
+	STCK(startTOD);
         scheduler();
 
     } else {
