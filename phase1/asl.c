@@ -37,6 +37,7 @@ HIDDEN void deallocSem(semd_t *sem)
     
     sem->s_next = semdFree_h;
     semdFree_h = sem;
+    sem->s_semAdd = NULL;
 }
 
 HIDDEN semd_t *search(int *semAdd)
