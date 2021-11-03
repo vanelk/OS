@@ -87,8 +87,6 @@ void createProc(state_PTR curr){
         } else {
             child->p_supportStruct = NULL;
         }
-        child->p_time = 0;
-        child->p_semAdd = NULL;
         processCount++;
         returnStatus = 0;
     }
@@ -190,7 +188,7 @@ void passUpOrDie(state_PTR curr){
         terminateProc(currentProc); 
     }
     /*i think we will need a switch to figure out which except state to put the biosdatapage in */
-    stateCopy(&(currentProc->p_supportStruct->sup_exceptState[0]), (state_PTR) BIOSDATAPAGE);
+    stateCopy(&(currentProc->p_supportStruct->sup_exceptState[0]), curr);
     LDCXT(currentProc->p_supportStruct->sup_exceptContext[0]);   
 }
 

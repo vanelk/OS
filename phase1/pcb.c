@@ -251,6 +251,7 @@ pcb_PTR allocPcb()
         allocate->p_prnt = NULL;
         allocate->p_semAdd = NULL;
         allocate->p_sib = NULL;
+        allocate->p_time = NULL;
     }
     
     return allocate;
