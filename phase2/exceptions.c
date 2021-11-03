@@ -34,6 +34,7 @@ void SYSCALLHandler(){
     state_PTR ps = (state_PTR) BIOSDATAPAGE;
     /* add 4 to pc */
     ps->s_t9 = ps->s_pc = ps->s_pc+PCINC;
+    
     switch (ps->s_a0)
     {
     case CREATEPROCESS:{
@@ -81,7 +82,7 @@ void createProc(state_PTR curr){
     if(child != NULL){
         insertChild(currentProc, child);
         insertProcQ(&readyQueue, child);
-        stateCopy((state_PTR) curr->s_a1, &(child->p_s));
+        stateCopy((state_PTR) (curr->s_a1), &(child->p_s));
         if(curr->s_a2 != 0 || curr->s_a2 != NULL){
             child->p_supportStruct = (support_t *) curr->s_a2;
         } else {
@@ -96,22 +97,23 @@ void createProc(state_PTR curr){
 
 void terminateProc(pcb_PTR curr){
     while(!emptyChild(curr)){
-	terminateProc(removeChild(curr));
+	    terminateProc(removeChild(curr));
     }
-/*check if in readyQueue*/
+    /*check if in readyQueue*/
     if(curr->p_semAdd == NULL){
-	outProcQ(&readyQueue, curr);
+	    outProcQ(&readyQueue, curr);
     }
-/*check if its the current proccess*/
+    /*check if its the current proccess*/
     if(currentProc == curr){
-	outChild(curr);
-    }
-    /*this bitch hiding in semaphores*/
-        else{
+	    outChild(curr);
+    } else {
+        /*this bitch hiding in semaphores*/
         int* semdAdd = curr->p_semAdd;
-        outBlocked(curr);
         if( semdAdd >= &semDevices[ZERO] && semdAdd <= &semDevices[DEVNUM]){
-            softBlockCount--;
+            pcb_PTR r = outBlocked(curr);
+            if(r != NULL){
+                softBlockCount--;
+            }
         }
         else{
             (*semdAdd)++;	
@@ -119,25 +121,24 @@ void terminateProc(pcb_PTR curr){
         
     }
     freePcb(curr);
-    processCount --;
+    processCount--;
 }
 
 void pass(state_PTR curr){
     int* semdAdd = curr->s_a1;
     (*semdAdd)--;
-    if(*semdAdd<0){
-	stateCopy(curr, &(currentProc->p_s));
+    if((*semdAdd)<0){
+	    stateCopy(curr, &(currentProc->p_s));
         insertBlocked(semdAdd, currentProc);
         scheduler();
     }
-    stateCopy(curr, &(currentProc->p_s));
     loadState(curr);   
 }
 
 void ver(state_PTR curr){
-    int* semdAdd = (int *) curr->s_a1;
+    int* semdAdd = curr->s_a1;
     (*semdAdd)++;
-    if(*semdAdd<=0){
+    if((*semdAdd)<=0){
         pcb_PTR temp = removeBlocked(semdAdd);
         if(temp != NULL) {
             insertProcQ(&readyQueue, temp);
@@ -160,21 +161,23 @@ void waitForIO(state_PTR curr){
 
 void getCPUTime(state_PTR curr){
     stateCopy(curr, &(currentProc->p_s));
-    int time;
+    cpu_t time;
     STCK(time);
     time -= startTOD;
-    currentProc->p_time = time;
-    currentProc->p_s.s_v0 = time;
+    currentProc->p_time += time;
+    currentProc->p_s.s_v0 = currentProc->p_time;
     loadState(&currentProc->p_s);   
 }
 
 void waitForClock(state_PTR curr){
     stateCopy(curr, &(currentProc->p_s));
     (*clockSem)--;
-    insertBlocked(clockSem, currentProc);
-    softBlockCount++;
-    currentProc = NULL;
-    scheduler();
+    if((*clockSem)<0){
+        insertBlocked(clockSem, currentProc);
+        softBlockCount++;
+        currentProc = NULL;
+        scheduler();
+    }
 }
 
 void getSupport(state_PTR curr){
@@ -189,14 +192,14 @@ void passUpOrDie(state_PTR curr, int exception){
         terminateProc(currentProc); 
     }
     /*i think we will need a switch to figure out which except state to put the biosdatapage in */
-    stateCopy(&(currentProc->p_supportStruct->sup_exceptState[exception]), curr);
+    stateCopy(curr, &(currentProc->p_supportStruct->sup_exceptState[exception]));
     LDCXT(currentProc->p_supportStruct->sup_exceptContext[exception]);   
 }
 
 void stateCopy(state_PTR oldState, state_PTR newState){
     int i=0;
     for(i=0; i<STATEREGNUM; i++){
-	newState->s_reg[i] = oldState->s_reg[i];
+	    newState->s_reg[i] = oldState->s_reg[i];
     }
     newState->s_entryHI = oldState->s_entryHI;
     newState->s_cause = oldState->s_cause;

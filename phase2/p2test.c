@@ -290,10 +290,7 @@ void test() {
 	print("error: p1 still alive after progtrap & no trap vector\n");
 	PANIC();					/* PANIC !!!     */
 }
-void debugT(int a, int b){
-	int i = 0;
-	i++;
-}
+
 
 /* p2 -- semaphore and cputime-SYS test process */
 void p2() {
@@ -304,11 +301,10 @@ void p2() {
 	SYSCALL(PASSERN, (int)&startp2, 0, 0);				/* P(startp2)   */
 
 	print("p2 starts\n");
-
 	/* initialize all semaphores in the s[] array */
 	for (i=0; i<= MAXSEM; i++)
 		s[i] = 0;
-
+	
 	/* V, then P, all of the semaphores in the s[] array */
 	for (i=0; i<= MAXSEM; i++)  {
 		SYSCALL(VERHOGEN, (int)&s[i], 0, 0);			/* V(S[I]) */
@@ -316,21 +312,20 @@ void p2() {
 		if (s[i] != 0)
 			print("error: p2 bad v/p pairs\n");
 	}
-
+	
 	print("p2 v's successfully\n");
 
 	/* test of SYS6 */
 
 	STCK(now1);				/* time of day   */
 	cpu_t1 = SYSCALL(GETCPUTIME, 0, 0, 0);			/* CPU time used */
-	debugT(cpu_t1, now1);
 	/* delay for several milliseconds */
 	for (i=1; i < LOOPNUM; i++)
 		;
 
 	cpu_t2 = SYSCALL(GETCPUTIME, 0, 0, 0);			/* CPU time used */
 	STCK(now2);				/* time of day  */
-
+	
 	if (((now2 - now1) >= (cpu_t2 - cpu_t1)) &&
 			((cpu_t2 - cpu_t1) >= (MINLOOPTIME / (* ((cpu_t *)TIMESCALEADDR)))))
 		print("p2 is OK\n");
@@ -352,7 +347,10 @@ void p2() {
 	print("error: p2 didn't terminate\n");
 	PANIC();					/* PANIC!           */
 }
-
+void debugB(int a, int b){
+	int i =0;
+	i++;
+}
 
 /* p3 -- clock semaphore test process */
 void p3() {
@@ -362,25 +360,24 @@ void p3() {
 
 	time1 = 0;
 	time2 = 0;
-
+	
 	/* loop until we are delayed at least half of clock V interval */
 	while (time2-time1 < (CLOCKINTERVAL >> 1) )  {
 		STCK(time1);			/* time of day     */
 		SYSCALL(WAITCLOCK, 0, 0, 0);
 		STCK(time2);			/* new time of day */
 	}
-
+	
 	print("p3 - WAITCLOCK OK\n");
 
 	/* now let's check to see if we're really charge for CPU
 	   time correctly */
 	cpu_t1 = SYSCALL(GETCPUTIME, 0, 0, 0);
-
+	
 	for (i=0; i<CLOCKLOOP; i++)
 		SYSCALL(WAITCLOCK, 0, 0, 0);
 	
 	cpu_t2 = SYSCALL(GETCPUTIME, 0, 0, 0);
-
 	if (cpu_t2 - cpu_t1 < (MINCLOCKLOOP / (* ((cpu_t *) TIMESCALEADDR))))
 		print("error: p3 - CPU time incorrectly maintained\n");
 	else

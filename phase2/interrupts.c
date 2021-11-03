@@ -17,12 +17,12 @@ cpu_t stopTOD;
 
 void IOHandler(){
     state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
+    
     int ip_bits = ((exception_state->s_cause & 0x00FF00)>> 8);
     int intlNo = 0;
     if(ip_bits & 1){
        PANIC();
     } else if (ip_bits & 2) {
-        setTIMER(QUANTUM);
         prepToSwitch();
     } else if (ip_bits & 4) {
         /* ACK the interrupt */
@@ -32,7 +32,7 @@ void IOHandler(){
         while (proc!=NULL)
         {
             insertProcQ(&readyQueue, proc);
-            pcb_PTR proc = removeBlocked(clockSem);
+            proc = removeBlocked(clockSem);
             softBlockCount--;
         }
         /* reset clock semaphore */
@@ -116,7 +116,7 @@ void IOHandler(){
 void prepToSwitch(){
     state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
     if(currentProc!=NULL){
-        stateCopy(&currentProc->p_s, exception_state);
+        stateCopy(exception_state, &(currentProc->p_s));
         insertProcQ(&readyQueue, currentProc);
     }
     scheduler();
