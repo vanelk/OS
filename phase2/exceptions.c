@@ -34,6 +34,11 @@ void SYSCALLHandler(){
     state_PTR ps = (state_PTR) BIOSDATAPAGE;
     /* add 4 to pc */
     ps->s_t9 = ps->s_pc = ps->s_pc+PCINC;
+
+    int mode = (ps->s_status & UMOFF);
+    if(mode != ALLOFF){
+	passUpOrDie(ps, GENERALEXCEPT);
+    }
     
     switch (ps->s_a0)
     {
