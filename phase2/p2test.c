@@ -408,15 +408,16 @@ void p4() {
 
 	SYSCALL(VERHOGEN, (int)&synp4, 0, 0);				/* V(synp4)     */
 
+	debugB(11, 1);
 	SYSCALL(PASSERN, (int)&blkp4, 0, 0);				/* P(blkp4)     */
-
+	
 	SYSCALL(PASSERN, (int)&synp4, 0, 0);				/* P(synp4)     */
 
 	/* start another incarnation of p4 running, and wait for  */
 	/* a V(synp4). the new process will block at the P(blkp4),*/
 	/* and eventually, the parent p4 will terminate, killing  */
 	/* off both p4's.                                         */
-
+	
 	p4state.s_sp -= QPAGE;		/* give another page  */
 
 	SYSCALL(CREATETHREAD, (int)&p4state, 0, 0);			/* start a new p4    */

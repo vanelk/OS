@@ -190,10 +190,13 @@ void getSupport(state_PTR curr){
 void passUpOrDie(state_PTR curr, int exception){
     if(currentProc->p_supportStruct == NULL){
         terminateProc(currentProc); 
+        currentProc = NULL;
+        scheduler();
+    }else{
+        /*i think we will need a switch to figure out which except state to put the biosdatapage in */
+        stateCopy(curr, &(currentProc->p_supportStruct->sup_exceptState[exception]));
+        LDCXT(currentProc->p_supportStruct->sup_exceptContext[exception]);   
     }
-    /*i think we will need a switch to figure out which except state to put the biosdatapage in */
-    stateCopy(curr, &(currentProc->p_supportStruct->sup_exceptState[exception]));
-    LDCXT(currentProc->p_supportStruct->sup_exceptContext[exception]);   
 }
 
 void stateCopy(state_PTR oldState, state_PTR newState){

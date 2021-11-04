@@ -14,7 +14,7 @@ void scheduler(){
         STCK(timeElapsed);
         /* Set time of current cpu */
         currentProc->p_time = currentProc->p_time + (timeElapsed - startTOD);
-        /*LDIT(startTOD);*/
+        LDIT(IOCLOCK);
     }
     /* remove next process from the ready queue */
     pcb_PTR next = removeProcQ(&readyQueue);
@@ -33,7 +33,7 @@ void scheduler(){
         }
         if(processCount > 0){
             if (softBlockCount > 0){
-                /* we wait with Interrupts and execeptions on */
+                /* we wait with Interrupts and exceptions on */
                 int mask = ALLOFF | IECON | IMON;
                 setSTATUS(mask);
                 WAIT();
