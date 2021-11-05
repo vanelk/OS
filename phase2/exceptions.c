@@ -37,7 +37,7 @@ void SYSCALLHandler(){
 
     int mode = (ps->s_status & UMOFF);
     if(mode != ALLOFF){
-	passUpOrDie(ps, GENERALEXCEPT);
+	    passUpOrDie(ps, GENERALEXCEPT);
     }
     
     switch (ps->s_a0)
@@ -114,8 +114,8 @@ void terminateProc(pcb_PTR curr){
     } else {
         /*this bitch hiding in semaphores*/
         int* semdAdd = curr->p_semAdd;
-        if( semdAdd >= &semDevices[ZERO] && semdAdd <= &semDevices[DEVNUM]){
             pcb_PTR r = outBlocked(curr);
+        if( semdAdd >= &semDevices[ZERO] && semdAdd <= &semDevices[DEVNUM]){
             if(r != NULL){
                 softBlockCount--;
             }
@@ -186,8 +186,8 @@ void waitForClock(state_PTR curr){
 }
 
 void getSupport(state_PTR curr){
-    currentProc->p_s.s_v0 = currentProc->p_supportStruct;
     stateCopy(curr, &(currentProc->p_s));
+    currentProc->p_s.s_v0 = currentProc->p_supportStruct;
     loadState(&currentProc->p_s);   
 }
 
@@ -200,7 +200,7 @@ void passUpOrDie(state_PTR curr, int exception){
     }else{
         /*i think we will need a switch to figure out which except state to put the biosdatapage in */
         stateCopy(curr, &(currentProc->p_supportStruct->sup_exceptState[exception]));
-        LDCXT(currentProc->p_supportStruct->sup_exceptContext[exception]);   
+        LDCXT(currentProc->p_supportStruct->sup_exceptContext[exception].c_stackPtr, currentProc->p_supportStruct->sup_exceptContext[exception].c_status, currentProc->p_supportStruct->sup_exceptContext[exception].c_pc);   
     }
 }
 
@@ -215,6 +215,12 @@ void stateCopy(state_PTR oldState, state_PTR newState){
     newState->s_pc = oldState->s_pc;
 }
 
-void otherExceptions(){
-    passUpOrDie((state_PTR) BIOSDATAPAGE,  GENERALEXCEPT);
+void otherExceptions(int reason){
+    if(reason<4){
+        passUpOrDie((state_PTR) BIOSDATAPAGE,  PGFAULTEXCEPT);
+
+    } else{
+
+        passUpOrDie((state_PTR) BIOSDATAPAGE,  GENERALEXCEPT);
+    }
 }

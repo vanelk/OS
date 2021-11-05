@@ -32,7 +32,7 @@ int main(){
     passupvector_t* nuke = (passupvector_t *) PASSUPVECTOR;
     nuke->tlb_refll_handler = (memaddr) uTLB_RefillHandler;
     /* setting the stack pointer for the nucleus TBL-refill event handler to top of nucleus stack page */
-    nuke->exception_stackPtr = NUKE; 
+    nuke->tlb_refll_stackPtr = NUKE; 
     nuke->exception_handler = (memaddr) exceptionHandler;
     /* load interupthandler */
     nuke->exception_stackPtr = NUKE;
@@ -69,7 +69,7 @@ void exceptionHandler(){
     oldstate = (state_PTR) BIOSDATAPAGE;
     int reason = ((oldstate->s_cause & 0x0000007c) >> 2);
     if(reason == 0) IOHandler();
-    if(reason <= 7) otherExceptions();
+    if(reason <= 7 || reason > 8) otherExceptions(reason);
     if(reason == 8) SYSCALLHandler();
 
 }

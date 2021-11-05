@@ -27,10 +27,12 @@ void IOHandler(){
     } else if (ip_bits & 4) {
         /* ACK the interrupt */
         LDIT(IOCLOCK);
+        STCK(stopTOD);
         pcb_PTR proc = removeBlocked(clockSem);
         /* Unblock all processes on the pseudo-clock */
         while (proc!=NULL)
         {
+            proc->p_time += (stopTOD- startTOD);
             insertProcQ(&readyQueue, proc);
             proc = removeBlocked(clockSem);
             softBlockCount--;
@@ -102,6 +104,8 @@ void IOHandler(){
         if(*semad>=ZERO){
             pcb_PTR proc = removeBlocked(semad);
             if(proc!=NULL){
+                STCK(stopTOD);
+                proc->p_time += (stopTOD- startTOD);
                 proc->p_s.s_v0 = statusCp;
                 softBlockCount--;
                 insertProcQ(&readyQueue, proc);
