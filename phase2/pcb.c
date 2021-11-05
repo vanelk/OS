@@ -34,6 +34,7 @@ void initPcbs()
 */
 void insertProcQ(pcb_PTR *tp, pcb_PTR p)
 {
+    if(!emptyProcQ(p)){
     if (emptyProcQ(*tp))
     {
         p->p_next = p;
@@ -48,6 +49,7 @@ void insertProcQ(pcb_PTR *tp, pcb_PTR p)
         p->p_prev->p_next = p;
     }
     (*tp) = p;
+    }
 }
 
 /*
@@ -89,15 +91,15 @@ pcb_PTR outProcQ(pcb_PTR *tp, pcb_PTR p)
     pcb_PTR tail = *tp;
     if(emptyProcQ(p)) return NULL;
     if(emptyProcQ(tail)) return NULL;
-    pcb_PTR temp = tail->p_prev;
+    pcb_PTR temp = tail->p_next;
     while(temp != p && temp != tail)
     {
-        temp = temp->p_prev;
+        temp = temp->p_next;
     }
     if(temp == p){
         p->p_next->p_prev = p->p_prev;
         p->p_prev->p_next = p->p_next;
-        if(temp == tail && tail->p_prev == tail)
+        if(temp == tail && tail->p_next == tail)
         {
             (*tp) = NULL;
         }else if(temp == tail)
@@ -115,6 +117,7 @@ pcb_PTR outProcQ(pcb_PTR *tp, pcb_PTR p)
 */
 void insertChild(pcb_PTR parent, pcb_PTR p)
 {
+    if(!emptyProcQ(p)){
     if (emptyChild(parent))
     {
         parent->p_child = p;
@@ -127,6 +130,7 @@ void insertChild(pcb_PTR parent, pcb_PTR p)
         p->p_prnt = parent;
         parent->p_child = p;
     }
+}
 }
 
 /*

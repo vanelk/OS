@@ -124,7 +124,9 @@ void terminateProc(pcb_PTR curr){
             }
         }
         else{
-            (*semdAdd)++;	
+  	    if(r!=NULL){
+            (*semdAdd)++;
+	    }	
         }
         
     }
