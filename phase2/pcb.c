@@ -71,8 +71,8 @@ pcb_PTR removeProcQ(pcb_PTR *tp)
     {
 
         pcb_PTR remove = tail->p_prev;
-        tail->p_prev = remove->p_prev;
-        tail->p_next = remove->p_next;
+        remove->p_prev->p_next = remove->p_next;
+        remove->p_next->p_prev = remove->p_prev;
         return remove;
     }
 }
@@ -87,31 +87,26 @@ pcb_PTR removeProcQ(pcb_PTR *tp)
 pcb_PTR outProcQ(pcb_PTR *tp, pcb_PTR p)
 {
     pcb_PTR tail = *tp;
-    pcb_PTR current = tail;
-    if(emptyProcQ(*tp)) return NULL;
-    if(p->p_prev == NULL && p->p_next == NULL) return NULL;
-    while (1)
+    if(emptyProcQ(p)) return NULL;
+    if(emptyProcQ(tail)) return NULL;
+    pcb_PTR temp = tail->p_prev;
+    while(temp != p && temp != tail)
     {
-        if (current == p)
+        temp = temp->p_prev;
+    }
+    if(temp == p){
+        p->p_next->p_prev = p->p_prev;
+        p->p_prev->p_next = p->p_next;
+        if(temp == tail && tail->p_prev == tail)
         {
-            if (tail == p)
-            {
-                removeProcQ(tail);
-            }
-            else
-            {
-                p->p_next->p_prev = p->p_prev;
-                p->p_prev->p_next = p->p_next;
-            }
-            p->p_next = NULL;
-            p->p_prev = NULL;
-            return p;
-        }
-        else if (current->p_next == tail)
+            (*tp) = NULL;
+        }else if(temp == tail)
         {
-            return NULL;
+            (*tp) = tail->p_next;
         }
-        current = current->p_next;
+        return temp;
+    } else {
+        return NULL;
     }
 }
 
@@ -254,6 +249,7 @@ pcb_PTR allocPcb()
         allocate->p_semAdd = NULL;
         allocate->p_sib = NULL;
         allocate->p_time = NULL;
+        allocate->p_supportStruct = NULL;
     }
     
     return allocate;

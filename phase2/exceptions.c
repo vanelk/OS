@@ -47,7 +47,9 @@ void SYSCALLHandler(){
         break;}
     
     case TERMINATEPROCESS:{
-        terminateProc(currentProc);
+        if(currentProc != NULL){
+            terminateProc(currentProc);
+        }
         scheduler();
         break;}
     
@@ -104,17 +106,18 @@ void terminateProc(pcb_PTR curr){
     while(!emptyChild(curr)){
 	    terminateProc(removeChild(curr));
     }
+     /*check if its the current proccess*/
+    if(currentProc == curr){
+	    outChild(curr);
+    } 
     /*check if in readyQueue*/
     if(curr->p_semAdd == NULL){
 	    outProcQ(&readyQueue, curr);
     }
-    /*check if its the current proccess*/
-    if(currentProc == curr){
-	    outChild(curr);
-    } else {
+   else {
         /*this bitch hiding in semaphores*/
         int* semdAdd = curr->p_semAdd;
-            pcb_PTR r = outBlocked(curr);
+        pcb_PTR r = outBlocked(curr);
         if( semdAdd >= &semDevices[ZERO] && semdAdd <= &semDevices[DEVNUM]){
             if(r != NULL){
                 softBlockCount--;
