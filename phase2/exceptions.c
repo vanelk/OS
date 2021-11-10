@@ -118,15 +118,12 @@ void terminateProc(pcb_PTR curr){
         /*this bitch hiding in semaphores*/
         int* semdAdd = curr->p_semAdd;
         pcb_PTR r = outBlocked(curr);
-        if( semdAdd >= &semDevices[ZERO] && semdAdd <= &semDevices[DEVNUM]){
-            if(r != NULL){
+        if(r != NULL){
+            if( semdAdd >= &semDevices[ZERO] && semdAdd <= &semDevices[DEVNUM]){
                 softBlockCount--;
-            }
-        }
-        else{
-  	    if(r!=NULL){
-            (*semdAdd)++;
-	    }	
+            } else {
+                (*semdAdd)++;
+            }	
         }
         
     }
@@ -223,9 +220,7 @@ void stateCopy(state_PTR oldState, state_PTR newState){
 void otherExceptions(int reason){
     if(reason<4){
         passUpOrDie((state_PTR) BIOSDATAPAGE,  PGFAULTEXCEPT);
-
     } else{
-
         passUpOrDie((state_PTR) BIOSDATAPAGE,  GENERALEXCEPT);
     }
 }
