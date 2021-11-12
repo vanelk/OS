@@ -112,6 +112,7 @@
 #define IMON 0x0000FF00
 #define TEBITON 0x08000000
 #define UMOFF 0x00000002
+#define KUON 0x00000008
 
 /*extra useful numbers */
 #define PCINC 4
