@@ -8,3 +8,5 @@
 #include "../h/interrupts.h"
 
 
+pcb_PTR currentProc;
+

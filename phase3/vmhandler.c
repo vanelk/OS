@@ -7,24 +7,36 @@
 #include "../h/initial.h"
 #include "../h/interrupts.h"
 
-int swapSem;
-
+extern pcb_PTR currentProc;
+extern swapPool [POOLSIZE];
 void pager(){
-    pcb_PTR currentProc;
-
-    int cause = currentProc->s_sup_exceptState[0].cause;
-
+    
+    support_t * support = SYSCALL(SYSCALL8, ZERO, ZERO, ZERO);
+    state_t exceptionState = support->sup_exceptState[PGFAULTEXCEPT];
+    int cause = exceptionState.s_cause;
+    // If cause isa TLB Modification exception, threat it as a program trap
     if(cause == 1){
-	SYSCALL(SYSCALL2,ZERO,ZERO,ZERO);
+	    SYSCALL(SYSCALL2, ZERO, ZERO, ZERO);
     }else{
-	SYSCALL(SYSCALL3,swapSem,ZERO,ZERO);
-	int frame = pickVictim();
-	SYSCALL(SYSCALL8,ZERO,ZERO,ZERO);
-	currentProc->s_
+        /* mutual exclusion of the swap pool table */
+        SYSCALL(SYSCALL3, swapSem, ZERO, ZERO);
+        int p = exceptionState.s_entryHI;
+        int frame = pickVictim();
+        /* selected frame is used */
+        if(swapPool[frame].asid!=-1){
+            
+        }
+        
     }
 }
 
 void uTLB_RefillHandler(){
+    state_PTR bios = (state_PTR) BIOSDATAPAGE;
+    setENTRYHI(currentProc->p_s.s_entryHI);
+    setENTRYLO(currentProc->p_s.s_entryLO);
+    TLBWR();
+    LDST(bios);
+
 
 }
 
