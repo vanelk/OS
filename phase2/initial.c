@@ -20,9 +20,6 @@ extern void test();
 extern void uTLB_RefillHandler();
 HIDDEN void exceptionHandler();
 
-void debug(int a, int b){
-    int i = 2+4;
-}
 /*
 The main function of the OS. initialize pcbs and semaphores. set memory adresses.
 starts first process and calls scheduler. only runs at the beginning.
