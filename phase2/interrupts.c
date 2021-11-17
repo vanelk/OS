@@ -5,6 +5,7 @@
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
 #include "../h/initial.h"
+#include "/usr/include/umps3/umps/libumps.h"
 /*Global Variables*/
 extern int semDevices[DEVNUM];
 extern pcb_PTR readyQueue;

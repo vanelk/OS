@@ -4,6 +4,7 @@
 #include "../h/asl.h"
 #include "../h/scheduler.h"
 #include "../h/initial.h"
+#include "/usr/include/umps3/umps/libumps.h"
 
 cpu_t timeElapsed;
 
