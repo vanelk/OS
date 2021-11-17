@@ -5,6 +5,12 @@
 #include "../h/scheduler.h"
 #include "../h/initial.h"
 
+/**************************************************************************************************************/
+/*                                            SCHEDULER.c                                                     */
+/* This module handles the start of a new process. If a process is available in the readyQueue it should      */
+/* be ran. If not then we either wait or die. each process is given 5 miliseconds to run before interrupted   */
+/* and switched to next process which is implemented round-robin.                                             */
+/**************************************************************************************************************/
 
 /*
 The scheduling method. This method is called whenever
