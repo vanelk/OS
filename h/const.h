@@ -114,13 +114,24 @@
 #define UMOFF 0x00000002
 #define KUON 0x00000008
 
+/* masks */
+#define EXCODEMASK 0x0000007c
+#define IPMASK 0x00FF00
+#define LINE0INTON 1
+#define LINE1INTON 2
+#define LINE2INTON 4
+#define LINE3INTON 8
+#define LINE4INTON 16
+#define LINE5INTON 32
+#define LINE6INTON 64
+#define LINE7INTON 128
+#define TRANSBITS 15
+
 /*extra useful numbers */
 #define PCINC 4
 #define ZERO 0
 #define ONE 1
 #define ON 1
 #define OFF 0
-#define EXCODEMASK 0x0000007c
-#define IPMASK 0x00FF00
 #define POOLSIZE 32
 #endif

@@ -39,15 +39,15 @@ IO can be found in device semaphores semDevices.
 void IOHandler(){
     state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
     /* get the ip bits from cause register of the execption state*/
-    int ip_bits = ((exception_state->s_cause & IPMASK)>> 8);
+    int ip_bits = ((exception_state->s_cause & IPMASK) >> 8);
     int intlNo = 0;
-    if(ip_bits & 1){
+    if(ip_bits & LINE0INTON){
         /* interprocessor interrupt not handled so we panic */
        PANIC();
-    } else if (ip_bits & 2) {
+    } else if (ip_bits & LINE1INTON) {
         /* PLT interrupt then we switch to the next process */
         prepToSwitch();
-    } else if (ip_bits & 4) {
+    } else if (ip_bits & LINE2INTON) {
         /*interval timer interrupt*/
         /* ACK the interrupt */
         LDIT(IOCLOCK);
@@ -70,36 +70,36 @@ void IOHandler(){
         prepToSwitch();
     }
     /* get the line number */    
-    if (ip_bits & 8) { 
+    if (ip_bits & LINE3INTON) { 
         intlNo = 3;
-    } else if (ip_bits & 16) {
+    } else if (ip_bits & LINE4INTON) {
         intlNo = 4;
-    } else if (ip_bits & 32) {
+    } else if (ip_bits & LINE5INTON) {
         intlNo = 5;
-    } else if (ip_bits & 64) {
+    } else if (ip_bits & LINE6INTON) {
         intlNo = 6;
-    } else if (ip_bits & 128) {
+    } else if (ip_bits & LINE7INTON) {
         intlNo = 7;
     }
     devregarea_t * ram = (devregarea_t *) RAMBASEADDR;
     int dev_bits = ram->interrupt_dev[intlNo-3];
     int devNo;
     /* find the device number */
-    if(dev_bits & 1){
+    if(dev_bits & LINE0INTON){
         devNo = 0;
-    } else if (dev_bits & 2) {
+    } else if (dev_bits & LINE1INTON) {
         devNo = 1;
-    } else if (dev_bits & 4) {
+    } else if (dev_bits & LINE2INTON) {
         devNo = 2;
-    } else if (dev_bits & 8) {
+    } else if (dev_bits & LINE3INTON) {
         devNo = 3;
-    } else if (dev_bits & 16) {
+    } else if (dev_bits & LINE4INTON) {
         devNo = 4;
-    } else if (dev_bits & 32) {
+    } else if (dev_bits & LINE5INTON) {
         devNo = 5;
-    } else if (dev_bits & 64) {
+    } else if (dev_bits & LINE6INTON) {
         devNo = 6;
-    } else if (dev_bits & 128) {
+    } else if (dev_bits & LINE7INTON) {
         devNo = 7;
     }
     /* Non timer interrupts */
@@ -114,7 +114,7 @@ void IOHandler(){
         /* terminal device */
         if (intlNo == 7){
             /* ready state for transmit*/
-            if(dev->t_transm_command & 15){
+            if(dev->t_transm_command & TRANSBITS){
                 /* ACK the command */
                 statusCp = dev->t_transm_status;
                 dev->t_transm_command = ACK;
