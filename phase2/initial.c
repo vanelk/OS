@@ -53,7 +53,7 @@ int main(){
     for(i=0; i<DEVNUM; i++)  semDevices[i] = ZERO;
     if(currentProc!= NULL){
         currentProc->p_s.s_pc = currentProc->p_s.s_t9 = (memaddr) test;
-        currentProc->p_s.s_status = ALLOFF | IEON | IMON | TEBITON;
+        currentProc->p_s.s_status = ALLOFF | IEON | IMON;
         currentProc->p_s.s_sp = TopOfRAM;
         currentProc->p_supportStruct = NULL;
         insertProcQ(&readyQueue, currentProc);
