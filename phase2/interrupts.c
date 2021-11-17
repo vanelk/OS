@@ -5,6 +5,14 @@
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
 #include "../h/initial.h"
+
+/**************************************************************************************************************/
+/*                                            INTERRUPTS.c                                                    */
+/* This module handles IO interrupts. There are 5 different device interrupts along with the interval clock   */
+/* interrupt. the interrupt priority begins with the interval timer, then is in order of the devices 3-8      */
+/* We decided to not give time back to the interrupted process.                                               */
+/**************************************************************************************************************/
+
 /*Global Variables*/
 extern int semDevices[DEVNUM];
 extern pcb_PTR readyQueue;

@@ -6,6 +6,14 @@
 #include "../h/exceptions.h"
 #include "../h/initial.h"
 
+/**************************************************************************************************************/
+/*                                            EXCEPTIONS.c                                                    */
+/* This module contains the methods for non IO exception handling in phase 2. SYSCALLs 1-8 are handled in     */
+/* this module and all other exceptions such as TLB, program trap, and other SYSCALLs are passed up to be     */
+/* handled in phase 3. This module also contains the stateCopy function which is used in other modules.       */
+/* The 8 SYSCALLs handled in this module will be defined in detail below.                                     */
+/**************************************************************************************************************/
+
 /*Global Variables*/
 extern pcb_PTR currentProc;
 extern pcb_PTR readyQueue;

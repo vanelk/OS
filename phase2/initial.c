@@ -6,6 +6,13 @@
 #include "../h/exceptions.h"
 #include "../h/interrupts.h"
 
+/**************************************************************************************************************/
+/*                                            INITIAL.c                                                       */
+/* This module contains the main function for the OS. This is the nucleus of the code where we initialize     */
+/* pcbs and semaphores from phase 1 and initialize the memory adresses. Finally it begins the first process   */
+/* and then calls the scheduler. This module also contains the main method for exception handling.            */
+/**************************************************************************************************************/
+
 /* Global variables */
 int processCount; /* number of processes of created processes still active */
 int softBlockCount; /* number of processes waiting for IO */
@@ -56,7 +63,7 @@ int main(){
     }else{
         /* set current process register values */
         firstProc->p_s.s_pc = firstProc->p_s.s_t9 = (memaddr) test;
-        firstProc->p_s.s_status = ALLOFF | IEON | IMON | TEBITON;
+        firstProc->p_s.s_status = ALLOFF | IEON | IMON;
         firstProc->p_s.s_sp = TopOfRAM;
         firstProc->p_supportStruct = NULL;
         /* insert the current process in to the ready queue */
