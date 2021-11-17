@@ -4,9 +4,7 @@
 #include "../h/asl.h"
 #include "../h/scheduler.h"
 #include "../h/initial.h"
-#include "/usr/include/umps3/umps/libumps.h"
 
-cpu_t timeElapsed;
 
 /*
 The scheduling method. This method is called whenever
@@ -16,6 +14,7 @@ is round-robin.
 	Return: NULL
 */
 void scheduler(){
+    cpu_t timeElapsed;
     if(currentProc!=NULL){
         /* get time how long the process has been running*/
         STCK(timeElapsed);
@@ -30,21 +29,27 @@ void scheduler(){
     if (next != NULL){
         /* set currentproc to the next process */
         currentProc = next;
+        /* update startTOD for current process */
         STCK(startTOD);
+        /* set timer */
         setTIMER(QUANTUM);
-        LDST(&(currentProc->p_s));
+        loadState(&(currentProc->p_s));
     } else {
         /* if there is no process in the ready queue, set currentproc to null */
         if(processCount == 0){
             HALT();
         }
         if(processCount > 0){
+            /* if there are still processes running and they are blocked */
             if (softBlockCount > 0){
-                /* we wait with Interrupts and exceptions on */
+                /* mask to turn interrupts on */
                 int mask = ALLOFF | IECON | IMON;
+                /* set the status to the mask */
                 setSTATUS(mask);
+                /* we wait with Interrupts on */
                 WAIT();
-            } 
+            }
+            /* We have processes running but they are not blocked nor in the ready queue */ 
             if (softBlockCount == 0) PANIC();
 
         }

@@ -5,7 +5,6 @@
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
 #include "../h/initial.h"
-#include "/usr/include/umps3/umps/libumps.h"
 /*Global Variables*/
 extern int semDevices[DEVNUM];
 extern pcb_PTR readyQueue;
@@ -17,7 +16,7 @@ extern cpu_t startTOD;
 /*Helper Methods*/
 extern void stateCopy(state_PTR oldState, state_PTR newState);
 
-/*local variable*/
+/*local stop time of the day*/
 cpu_t stopTOD;
 
 /*
@@ -31,30 +30,39 @@ IO can be found in device semaphores semDevices.
 */
 void IOHandler(){
     state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
-    
-    int ip_bits = ((exception_state->s_cause & 0x00FF00)>> 8);
+    /* get the ip bits from cause register of the execption state*/
+    int ip_bits = ((exception_state->s_cause & IPMASK)>> 8);
     int intlNo = 0;
     if(ip_bits & 1){
+        /* interprocessor interrupt not handled so we panic */
        PANIC();
     } else if (ip_bits & 2) {
+        /* PLT interrupt then we switch to the next process */
         prepToSwitch();
     } else if (ip_bits & 4) {
+        /*interval timer interrupt*/
         /* ACK the interrupt */
         LDIT(IOCLOCK);
+        /* get the stop time of the day */
         STCK(stopTOD);
+        /* Unblock all processes on the pseudo-clock semaphore */
         pcb_PTR proc = removeBlocked(clockSem);
-        /* Unblock all processes on the pseudo-clock */
         while (proc!=NULL)
         {
+            /* charge the process for the time it was blocked */
             proc->p_time += (stopTOD- startTOD);
             insertProcQ(&readyQueue, proc);
             proc = removeBlocked(clockSem);
+            /* decrement the softblock count */
             softBlockCount--;
         }
         /* reset clock semaphore */
         *clockSem = 0;
+        /* swtich to next process */
         prepToSwitch();
-    } else if (ip_bits & 8) { 
+    }
+    /* get the line number */    
+    if (ip_bits & 8) { 
         intlNo = 3;
     } else if (ip_bits & 16) {
         intlNo = 4;
@@ -68,6 +76,7 @@ void IOHandler(){
     devregarea_t * ram = (devregarea_t *) RAMBASEADDR;
     int dev_bits = ram->interrupt_dev[intlNo-3];
     int devNo;
+    /* find the device number */
     if(dev_bits & 1){
         devNo = 0;
     } else if (dev_bits & 2) {
@@ -87,11 +96,12 @@ void IOHandler(){
     }
     /* Non timer interrupts */
     if( intlNo >= 3){
+        /* calculate the device index using the line and device number */
         int devi = (intlNo - 3) * DEVPERINT + devNo;
-        /* calculate the device address */
+        /* calculate the device address; directly taken from POPS pg28 */
         int devAddrbase = 0x10000054 + ((intlNo -3) * 0x80) + (devNo * 0x10);
-        /* Get the device from the device address */
         int statusCp;
+        /* Get the device from the device address */
         device_t * dev = (device_t *) devAddrbase;
         /* terminal device */
         if (intlNo == 7){
@@ -112,20 +122,23 @@ void IOHandler(){
             /* ACK the interupt */
             dev->d_command = ACK;
         }
-        /* Do a V on the dev sem for current device */
+        /* Do a V on the device sem for current device */
         int *semad = &semDevices[devi];
         (*semad)++;
         if(*semad>=ZERO){
             pcb_PTR proc = removeBlocked(semad);
             if(proc!=NULL){
+                /* charge the unblocked process for the time spent */
                 STCK(stopTOD);
                 proc->p_time += (stopTOD- startTOD);
+                /* return the device status*/
                 proc->p_s.s_v0 = statusCp;
+                /* decrement the soft block count */
                 softBlockCount--;
                 insertProcQ(&readyQueue, proc);
             }
         }
-        /* probably do a reschedule? since we need to think about the time*/
+        /* swtich to next process */
         prepToSwitch();
     }
 
@@ -140,9 +153,11 @@ readyQueue. then calls scheduler.
 */
 void prepToSwitch(){
     state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
+    /* change the current process from running to ready if it is not NULL */
     if(currentProc!=NULL){
         stateCopy(exception_state, &(currentProc->p_s));
         insertProcQ(&readyQueue, currentProc);
     }
+    /* switch to next process */
     scheduler();
 }

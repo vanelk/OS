@@ -5,7 +5,6 @@
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
 #include "../h/interrupts.h"
-#include "/usr/include/umps3/umps/libumps.h"
 
 /* Global variables */
 int processCount; /* number of processes of created processes still active */
@@ -48,23 +47,29 @@ int main(){
     processCount = 0;
     softBlockCount = 0;
     readyQueue = mkEmptyProcQ();
-    currentProc = allocPcb();
+    currentProc = NULL;
+    /* initialize the device semaphores' value to 0 */
     int i;
     for(i=0; i<DEVNUM; i++)  semDevices[i] = ZERO;
-    if(currentProc!= NULL){
-        currentProc->p_s.s_pc = currentProc->p_s.s_t9 = (memaddr) test;
-        currentProc->p_s.s_status = ALLOFF | IEON | IMON | TEBITON;
-        currentProc->p_s.s_sp = TopOfRAM;
-        currentProc->p_supportStruct = NULL;
-        insertProcQ(&readyQueue, currentProc);
+    /* allocate the first process */
+    pcb_PTR firstProc = allocPcb();
+    /* if the allocation failed, which should not happen we PANIC */
+    if(firstProc == NULL){
+        PANIC();
+    }else{
+        /* set current process register values */
+        firstProc->p_s.s_pc = firstProc->p_s.s_t9 = (memaddr) test;
+        firstProc->p_s.s_status = ALLOFF | IEON | IMON | TEBITON;
+        firstProc->p_s.s_sp = TopOfRAM;
+        firstProc->p_supportStruct = NULL;
+        /* insert the current process in to the ready queue */
+        insertProcQ(&readyQueue, firstProc);
         processCount++;
         LDIT(IOCLOCK);
-        currentProc = NULL;
+        firstProc = NULL;
+        /* set startTOD */
         STCK(startTOD);
         scheduler();
-
-    } else {
-        PANIC();
     }
     return 0;
     
@@ -81,9 +86,13 @@ and if its an 8 then it is a SYSCALL.
 void exceptionHandler(){
     state_PTR oldstate;
     oldstate = (state_PTR) BIOSDATAPAGE;
-    int reason = ((oldstate->s_cause & 0x0000007c) >> 2);
+    /* get the reason for exception from cause register */
+    int reason = ((oldstate->s_cause & EXCODEMASK) >> 2);
+    /* if the reason is 0 then exception is an IO interrupt*/
     if(reason == 0) IOHandler();
+    /* either a general exception or a page fault exception */
     if(reason <= 7 || reason > 8) otherExceptions(reason);
+    /* if the reason is 8 then it is a SYSCALL */
     if(reason == 8) SYSCALLHandler();
 
 }

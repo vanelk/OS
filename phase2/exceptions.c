@@ -5,7 +5,6 @@
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
 #include "../h/initial.h"
-#include "/usr/include/umps3/umps/libumps.h"
 
 /*Global Variables*/
 extern pcb_PTR currentProc;
@@ -43,7 +42,7 @@ void SYSCALLHandler(){
     state_PTR ps = (state_PTR) BIOSDATAPAGE;
     /* add 4 to pc */
     ps->s_t9 = ps->s_pc = ps->s_pc+PCINC;
-
+    /* if UM bits were ON the we passup or die */
     int mode = (ps->s_status & UMOFF);
     if(mode != ALLOFF){
 	    passUpOrDie(ps, GENERALEXCEPT);
@@ -99,20 +98,30 @@ SYSCALL 1 Method. creates a new process and sets it as the child of the current 
 		0 if sucessful
 */
 void createProc(state_PTR curr){
+    /* allocate a new PCB or process */
     pcb_PTR child = allocPcb();
+    /* set return status to -1 to indicate failure as default*/
     int returnStatus = -1;
+    /* if allocate was a success */
     if(child != NULL){
+        /* make the new process a child of the current process */
         insertChild(currentProc, child);
+        /* insert new process into ready queue */
         insertProcQ(&readyQueue, child);
+        /* copy the passed state into the state of the new process */
         stateCopy((state_PTR) (curr->s_a1), &(child->p_s));
+        /* set the support structure of the new process if it was passed else it is set to NULL*/
         if(curr->s_a2 != 0 || curr->s_a2 != NULL){
             child->p_supportStruct = (support_t *) curr->s_a2;
         } else {
             child->p_supportStruct = NULL;
         }
+        /* increment process count */
         processCount++;
+        /* set return status to 0 to indicate success*/
         returnStatus = 0;
     }
+    /* return returnStatus */
     currentProc->p_s.s_v0 = returnStatus;
     loadState(curr);   
 }
@@ -160,7 +169,9 @@ semaphores to wait.
 */
 void pass(state_PTR curr){
     int* semdAdd = curr->s_a1;
+    /* decrement semaphore */
     (*semdAdd)--;
+    /* if semaphore less than zero, then block the process */
     if((*semdAdd)<0){
 	    stateCopy(curr, &(currentProc->p_s));
         insertBlocked(semdAdd, currentProc);
@@ -177,7 +188,9 @@ void pass(state_PTR curr){
 */
 void ver(state_PTR curr){
     int* semdAdd = curr->s_a1;
+    /* increment semaphore */
     (*semdAdd)++;
+    /* semaphore is  less than or equal to zero unblock a procress */
     if((*semdAdd)<=0){
         pcb_PTR temp = removeBlocked(semdAdd);
         if(temp != NULL) {
@@ -195,10 +208,14 @@ Process is put onto that devices respective semaphore to wait.
 */
 void waitForIO(state_PTR curr){
     stateCopy(curr, &(currentProc->p_s));
+    /* get line number of device */
     int lineNo = curr->s_a1;
+    /* get device number */
     int devNo = curr->s_a2;
     int waitterm = curr->s_a3;
+    /* calculate device's semaphore index */
     int devi = ((lineNo - 3 + waitterm) * DEVPERINT + devNo);
+    /* block current process */
     semDevices[devi]--;
     softBlockCount++;
     insertBlocked(&(semDevices[devi]), currentProc);
@@ -213,10 +230,13 @@ CPU Time is stored in the processes pcb time and its states v0.
 	Return: NULL 
 */
 void getCPUTime(state_PTR curr){
+    /* copy exception state to current process state */
     stateCopy(curr, &(currentProc->p_s));
     cpu_t time;
+    /* calculate time that has passed by subtracting current time from startTOD*/
     STCK(time);
     time -= startTOD;
+    /* add time to current process time */
     currentProc->p_time += time;
     currentProc->p_s.s_v0 = currentProc->p_time;
     loadState(&currentProc->p_s);   
@@ -231,6 +251,7 @@ timer. Process is stored on the interval timers Semaphore.
 void waitForClock(state_PTR curr){
     stateCopy(curr, &(currentProc->p_s));
     (*clockSem)--;
+    /* if semaphore is less than zero, then block the process in the clock semaphore */
     if((*clockSem)<0){
         insertBlocked(clockSem, currentProc);
         softBlockCount++;
@@ -246,7 +267,9 @@ Support structure is stored in the processes pcb supportStruct.
 	Return: NULL
 */
 void getSupport(state_PTR curr){
+    /* copy exception state to current process state */
     stateCopy(curr, &(currentProc->p_s));
+    /* return the support structure of the current process */
     currentProc->p_s.s_v0 = currentProc->p_supportStruct;
     loadState(&currentProc->p_s);   
 }
@@ -261,6 +284,7 @@ and what type of exception to be handled in phase 3.
 	Return: NULL
 */
 void passUpOrDie(state_PTR curr, int exception){
+    /* if the current process has no support structure then we die */
     if(currentProc->p_supportStruct == NULL){
         terminateProc(currentProc); 
         currentProc = NULL;
@@ -279,10 +303,12 @@ Copies the state of one state into another.
 	Return: NULL
 */
 void stateCopy(state_PTR oldState, state_PTR newState){
-    int i=0;
+    int i;
+    /* copy the registers */
     for(i=0; i<STATEREGNUM; i++){
 	    newState->s_reg[i] = oldState->s_reg[i];
     }
+    /* copy the other special registersa */
     newState->s_entryHI = oldState->s_entryHI;
     newState->s_cause = oldState->s_cause;
     newState->s_status = oldState->s_status;

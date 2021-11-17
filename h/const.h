@@ -120,7 +120,7 @@
 #define ONE 1
 #define ON 1
 #define OFF 0
-
-
+#define EXCODEMASK 0x0000007c
+#define IPMASK 0x00FF00
 #define POOLSIZE 32
 #endif
