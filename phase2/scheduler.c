@@ -7,7 +7,13 @@
 
 cpu_t timeElapsed;
 
-/* The scheduling algorithm implemented is round-robin*/
+/*
+The scheduling method. This method is called whenever
+a new process is needed. The scheduling algorithm used
+is round-robin.
+	Parameters: NULL
+	Return: NULL
+*/
 void scheduler(){
     if(currentProc!=NULL){
         /* get time how long the process has been running*/
@@ -43,7 +49,12 @@ void scheduler(){
         }
     }
 }
-
+/*
+LDST container method because LDST is
+TOO POWERFUL
+	Parameter: ps -> process to load
+	Return: NULL
+*/
 void loadState(state_PTR ps){
     LDST(ps);
 }

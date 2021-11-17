@@ -14,6 +14,8 @@ pcb_PTR currentProc; /* pointer to the current process*/
 int semDevices[DEVNUM]; /* 1 for each device available (49) in total */
 cpu_t startTOD;
 int *clockSem = &semDevices[DEVNUM-ONE];
+
+/*Helper Methods*/
 extern void test();
 extern void uTLB_RefillHandler();
 HIDDEN void exceptionHandler();
@@ -21,6 +23,10 @@ HIDDEN void exceptionHandler();
 void debug(int a, int b){
     int i = 2+4;
 }
+/*
+The main function of the OS. initialize pcbs and semaphores. set memory adresses.
+starts first process and calls scheduler. only runs at the beginning.
+*/
 int main(){
     /*initialize PCB and ASL*/
     initPcbs();
@@ -63,7 +69,14 @@ int main(){
     
 }
 
-
+/*
+Method to handle all exceptions and send them where they are
+needed. if the reason is 0 then exception is an IO,
+if its <= 7 it is a TLB or GENERAL exception that will be passed up
+and if its an 8 then it is a SYSCALL.
+	Parameters: NULL
+	Return: NULL
+*/
 void exceptionHandler(){
     state_PTR oldstate;
     oldstate = (state_PTR) BIOSDATAPAGE;

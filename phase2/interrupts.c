@@ -5,16 +5,29 @@
 #include "../h/scheduler.h"
 #include "../h/exceptions.h"
 #include "../h/initial.h"
-
+/*Global Variables*/
 extern int semDevices[DEVNUM];
 extern pcb_PTR readyQueue;
 extern pcb_PTR currentProc;
 extern int softBlockCount;
 extern int * clockSem;
 extern cpu_t startTOD;
+
+/*Helper Methods*/
 extern void stateCopy(state_PTR oldState, state_PTR newState);
+
+/*local variable*/
 cpu_t stopTOD;
 
+/*
+Main method to handle IO interrupts. We have 5 different types of
+devices with 8 devices each. which device caused the interrupt
+can be found within the BIOSDATAPAGE Handles devices 1-4 the same
+but handles terminal differently. Processes waiting for device
+IO can be found in device semaphores semDevices.
+	Parameters: NULL
+	Return: NULL
+*/
 void IOHandler(){
     state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
     
@@ -117,6 +130,13 @@ void IOHandler(){
 
 }
 
+/*
+Helper method to switch processes after IO is handled. 
+copies necessary state data and puts the IO device onto
+readyQueue. then calls scheduler.
+	Parameters: NULL
+	Return: NULL
+*/
 void prepToSwitch(){
     state_PTR  exception_state = (state_PTR) BIOSDATAPAGE;
     if(currentProc!=NULL){

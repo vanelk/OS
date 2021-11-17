@@ -6,6 +6,7 @@
 #include "../h/exceptions.h"
 #include "../h/initial.h"
 
+/*Global Variables*/
 extern pcb_PTR currentProc;
 extern pcb_PTR readyQueue;
 extern int processCount;
@@ -15,6 +16,7 @@ extern cpu_t startTOD;
 extern int * clockSem;
 extern void loadState(state_PTR ps);
 
+/*Declaration of SYSCALL Functions*/
 void createProc(state_PTR curr);
 void terminateProc(pcb_PTR prnt);
 void pass(state_PTR curr);
@@ -23,13 +25,19 @@ void waitForIO(state_PTR curr);
 void getCPUTime(state_PTR curr);
 void waitForClock(state_PTR curr);
 void getSupport(state_PTR curr);
-void passUpOrDie(state_PTR curr, int exception);
 
+/*Declaration of Helper Functions*/
+void passUpOrDie(state_PTR curr, int exception);
 void otherExceptions();
 void pgrmTrap();
 void tblTrab();
 void stateCopy(state_PTR oldState, state_PTR newState);
 
+/*
+Main method to handle SYSCALLS. 8 SYSCALLS total (1-8).
+	Parameters: NONE
+	RETURN: NONE
+*/
 void SYSCALLHandler(){
     state_PTR ps = (state_PTR) BIOSDATAPAGE;
     /* add 4 to pc */
@@ -82,7 +90,13 @@ void SYSCALLHandler(){
         break;}
     }
 }
-/* Utility function takes in parent process*/
+
+/* 
+SYSCALL 1 Method. creates a new process and sets it as the child of the current proccess.
+	Parameter: state_PTR oldState
+	Return: -1 if unsucessful
+		0 if sucessful
+*/
 void createProc(state_PTR curr){
     pcb_PTR child = allocPcb();
     int returnStatus = -1;
@@ -102,6 +116,11 @@ void createProc(state_PTR curr){
     loadState(curr);   
 }
 
+/* 
+SYSCALL 2 Method. murders the current process and its decendants.
+	Parameter: state_PTR oldState
+	Return: NULL 
+*/
 void terminateProc(pcb_PTR curr){
     while(!emptyChild(curr)){
 	    terminateProc(removeChild(curr));
@@ -131,6 +150,13 @@ void terminateProc(pcb_PTR curr){
     processCount--;
 }
 
+/*
+SYSCALL 3 Method. Passeren, used when a process needs mutual exclusion on variable.
+if another process already has mutual exclusion on the variable then process is put into
+semaphores to wait.
+	Parameters: state_PTR oldState
+	Return: NULL
+*/
 void pass(state_PTR curr){
     int* semdAdd = curr->s_a1;
     (*semdAdd)--;
@@ -142,6 +168,12 @@ void pass(state_PTR curr){
     loadState(curr);   
 }
 
+/*SYSCALL 4 Method. Verhogen, used when a process is done with mutual exclusion on variable.
+ checks if there is another process waiting for mutual exclusion, and if so pulls it out of
+ the semaphore and puts it onto the readyQueue
+	Parameters: state_PTR oldState
+	Return: NULL
+*/
 void ver(state_PTR curr){
     int* semdAdd = curr->s_a1;
     (*semdAdd)++;
@@ -153,6 +185,13 @@ void ver(state_PTR curr){
     }
     loadState(curr);
 }
+
+/*
+SYSCALL 5 Method. called when process needs to wait for device I/O.
+Process is put onto that devices respective semaphore to wait.
+	Parameters: state_PTR oldState
+	Return: NULL
+*/
 void waitForIO(state_PTR curr){
     stateCopy(curr, &(currentProc->p_s));
     int lineNo = curr->s_a1;
@@ -166,6 +205,12 @@ void waitForIO(state_PTR curr){
     scheduler();
 }
 
+/*
+SYSCALL 6 Method. Called when process needs the CPU Time.
+CPU Time is stored in the processes pcb time and its states v0.
+	Parameters: state_PTR oldState
+	Return: NULL 
+*/
 void getCPUTime(state_PTR curr){
     stateCopy(curr, &(currentProc->p_s));
     cpu_t time;
@@ -176,6 +221,12 @@ void getCPUTime(state_PTR curr){
     loadState(&currentProc->p_s);   
 }
 
+/*
+SYSCALL 7 Method. Called when process needs to wait for the interval
+timer. Process is stored on the interval timers Semaphore.
+	Parameters: state_PTR oldState
+	Return: NULL
+*/
 void waitForClock(state_PTR curr){
     stateCopy(curr, &(currentProc->p_s));
     (*clockSem)--;
@@ -187,13 +238,27 @@ void waitForClock(state_PTR curr){
     }
 }
 
+/*
+SYSCALL 8 Method. Called when the process needs its support structure.
+Support structure is stored in the processes pcb supportStruct.
+	Parameters: state_PTR oldState
+	Return: NULL
+*/
 void getSupport(state_PTR curr){
     stateCopy(curr, &(currentProc->p_s));
     currentProc->p_s.s_v0 = currentProc->p_supportStruct;
     loadState(&currentProc->p_s);   
 }
 
-
+/*
+Method called when exception cannot be handled in this phase.
+If the current processes support struct is NULL the process and
+its children are all murdered. otherwisep asses up the context 
+and what type of exception to be handled in phase 3.
+	Parameters: state_PTR oldState
+		    int exception -> type of exception is being passed up
+	Return: NULL
+*/
 void passUpOrDie(state_PTR curr, int exception){
     if(currentProc->p_supportStruct == NULL){
         terminateProc(currentProc); 
@@ -206,6 +271,12 @@ void passUpOrDie(state_PTR curr, int exception){
     }
 }
 
+/*
+Copies the state of one state into another.
+	Parameters: state_PTR oldState
+		    state_PTR newState
+	Return: NULL
+*/
 void stateCopy(state_PTR oldState, state_PTR newState){
     int i=0;
     for(i=0; i<STATEREGNUM; i++){
@@ -217,6 +288,11 @@ void stateCopy(state_PTR oldState, state_PTR newState){
     newState->s_pc = oldState->s_pc;
 }
 
+/*
+Helper method to handle non syscall 1-8 exceptions
+	Parameters: int reason -> what type of exception is it
+	Return: NULL
+*/
 void otherExceptions(int reason){
     if(reason<4){
         passUpOrDie((state_PTR) BIOSDATAPAGE,  PGFAULTEXCEPT);
