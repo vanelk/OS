@@ -60,13 +60,19 @@ typedef struct passupvector {
 #define STATEREGNUM	31
 typedef struct state_t {
 	unsigned int	s_entryHI;
-	/*unsigned int	s_entryLO;*/
+	unsigned int	s_entryLO; /* is this supposed be here */
 	unsigned int	s_cause;
 	unsigned int	s_status;
 	unsigned int 	s_pc;
 	int	 	s_reg[STATEREGNUM];
 
 } state_t, *state_PTR;
+
+typedef struct pteEntry_t {
+	unsigned int	entryHI;
+	unsigned int	entryLO;
+} pteEntry_t, *pteEntry_PTR;
+
 
 #define	s_at	s_reg[0]
 #define	s_v0	s_reg[1]
@@ -106,9 +112,12 @@ typedef struct context{
 } context_t;
 typedef struct support_t
 {
-    int sub_asid;
+    int sup_asid;
     state_t sup_exceptState[2];
     context_t sup_exceptContext[2];
+	pteEntry_t sup_privatPgTb[POOLSIZE];
+	unsigned int sup_stackTLB[501];
+	unsigned int sup_stackGen[501];
 } support_t;
 
 typedef struct pcb_t
@@ -132,5 +141,12 @@ typedef struct semd_t{
  int *s_semAdd; /* pointer to the semaphore */
  pcb_t *s_procQ; /* processs queue */
 } semd_t;
+
+typedef struct swap_t{
+	unsigned int sw_asid;
+	unsigned int sw_pageNo;
+	pteEntry_t * sw_pte;
+} swap_t;
+
 
 #endif

@@ -133,5 +133,24 @@
 #define ONE 1
 #define ON 1
 #define OFF 0
+
+
+/* phase 3 global variables */
+#define MAXUPROC 8
 #define POOLSIZE 32
+#define TERMINATE 9
+#define GetTOD 10 
+#define WRITETOPRINTER 11 
+#define WRITETOTERMINAL 12 
+#define READFROMTERMINAL 13
+#define	TERM0ADDR 0x10000254
+#define TERMSTATMASK 0xff
+#define RECVD 5
+#define DIRTYON 0x00000400
+#define VPNSHIFT 12
+#define ASIDSHIFT 5
+#define GETPAGENO 0x00007000
+
+#define PRINTCHR	2
+#define BYTELEN	8
 #endif
