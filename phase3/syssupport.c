@@ -8,14 +8,18 @@
 #include "../h/interrupts.h"
 
 extern semDevices[DEVNUM];
+extern int swapSem;
+extern swap_t swapPool [POOLSIZE];
+extern void stateCopy(state_PTR oldState, state_PTR newState);
 
 void uSyscallHandler(){
     support_t * support = SYSCALL(GETSUPPORTPTR, ZERO, ZERO, ZERO);
-    state_t exceptionState = support->sup_exceptState[GENERALEXCEPT];
+    state_t exceptionState;
+    stateCopy(&support->sup_exceptState[GENERALEXCEPT], &exceptionState);
     exceptionState.s_pc+=PCINC;
     int cause = exceptionState.s_cause;
     if(cause == 1){
-        SYSCALL(TERMINATEPROCESS, ZERO, ZERO, ZERO);
+        SYSCALL(TERMINATE, ZERO, ZERO, ZERO);
     }else{
         int syscallNum = exceptionState.s_a0;
         int pid = support->sup_asid;
@@ -25,7 +29,7 @@ void uSyscallHandler(){
         int ret = 0;
         switch(syscallNum){
             case TERMINATE:
-                terminate();
+                terminate(pid);
                 break;
             case GetTOD:
                 exceptionState.s_v0 = getTOD();
@@ -40,18 +44,13 @@ void uSyscallHandler(){
                 exceptionState.s_v0 =  readFromTerminal(arg1);
                 break;
             default:
-                terminate();
+                terminate(pid);
         }
         LDST(&exceptionState);
     }
 }
 
 
-int pickVictim(){
-    static int i=0;
-    i=(i+1)%POOLSIZE;
-    return i;
-}
 
 void interruptsSwitch(int on){
     if(on){
@@ -61,27 +60,40 @@ void interruptsSwitch(int on){
     }
 }
 
-terminate(){
+terminate(int asid){
+    SYSCALL(VERHOGEN,&swapSem,ZERO,ZERO);
+    interruptsSwitch(0);
+        int i; 
+        for(i = 0; i < POOLSIZE;i++){
+            if(swapPool[i].sw_asid == asid ){
+                swapPool[i].sw_asid = -ONE;
+                swapPool[i].sw_pageNo = -ONE;
+                swapPool[i].sw_pte = NULL;
+            }
+
+        }
+    interruptsSwitch(1);
     
-    SYSCALL(TERMINATEPROCESS, ZERO, ZERO, ZERO);
+    SYSCALL(PASSEREN,&swapSem,ZERO,ZERO);
+    
+    TLBCLR(); 
+    SYSCALL(TERMINATEPROCESS,ZERO,ZERO,ZERO);
 }
 
 int writeToTerminal(char *msg, int strlen, int pid) {
-
-	char *s = msg;
 	unsigned int * base = (unsigned int *) (TERM0ADDR);
 	unsigned int status;
 	SYSCALL(PASSEREN, (int)&semDevices[34], 0, 0);				/* P(term_mut) */
     int i = 0;
     int ret = 0;
 	for (i;i<strlen;i++) {
-		*(base + 3) = PRINTCHR | (((unsigned int) *s) << BYTELEN);
+		*(base + 3) = PRINTCHR | (((unsigned int) *msg) << BYTELEN);
 		int status = SYSCALL(WAITIO, TERMINT, 0, 0);	
         if ((status & TERMSTATMASK) != RECVD){
 			ret = -status;
             break;
         }
-		s++;	
+		msg++;	
 	}
 	SYSCALL(VERHOGEN, (int)&semDevices[34], 0, 0);				/* V(term_mut) */
     return ret;
@@ -92,7 +104,22 @@ int readFromTerminal(char * virtAddr){
 
 
 int writeToPrinter(char *msg, int strlen, int pid) {
-    device_t* printer = (device_t *) (0x10000054 + ((3) * 0x80) + (pid * 0x10));
+    unsigned int * printer = (0x10000054 + ((3) * 0x80) + (pid * 0x10));
+    unsigned int status;
+	SYSCALL(PASSEREN, (int)&semDevices[34], 0, 0);				/* P(term_mut) */
+    int i = 0;
+    int ret = 0;
+	for (i;i<strlen;i++) {
+		*(printer + 3) = PRINTCHR | (((unsigned int) *msg) << BYTELEN);
+		int status = SYSCALL(WAITIO, TERMINT, 0, 0);	
+        if ((status & TERMSTATMASK) != RECVD){
+			ret = -status;
+            break;
+        }
+		msg++;	
+	}
+	SYSCALL(VERHOGEN, (int)&semDevices[34], 0, 0);				/* V(term_mut) */
+    return ret;
     return 0;
 }
 
@@ -100,19 +127,4 @@ cpu_t getTOD(){
     cpu_t now;
     STCK(now);
     return now;
-}
-
-void flashIO(int writeOn, int data, int flashIOdNo){
-    device_t* flash = (device_t *) ((0x10000054 + 0x80) + (flashIOdNo * 0x10));
-    SYSCALL(PASSEREN, (int)&semDevices[8+flashIOdNo], 0, 0);				/* P(flash_mut) */
-    if(writeOn){
-        flash->d_command = 3;
-        flash->d_data0 = data;
-    }else{
-        flash->d_command = 2;
-        flash->d_data0 = data;
-    }
-    SYSCALL(WAITIO, FLASHINT, 0, 0);
-    SYSCALL(VERHOGEN, (int)&semDevices[8+flashIOdNo], 0, 0);				/* V(flash_mut) */
-
 }

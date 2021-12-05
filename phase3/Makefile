@@ -20,11 +20,11 @@ SUPDIR = $(UMPS3_DIR_PREFIX)/share/umps3
 
 DEFS = ../h/const.h ../h/types.h ../h/pcb.h ../h/asl.h \
 	../h/initial.h ../h/interrupts.h ../h/scheduler.h ../h/exceptions.h \
-	../h/initProc.h ../h/vmSupport.h ../h/sysSupport.h \
+	../h/initproc.h ../h/vmsupport.h ../h/syssupport.h \
 	$(INCDIR)/libumps.h Makefile
 
 OBJS = initial.o interrupts.o scheduler.o exceptions.o asl.o pcb.o \
-	initProc.o vmSupport.o sysSupport.o
+	initproc.o vmsupport.o syssupport.o
 
 CFLAGS = -ffreestanding -ansi -Wall -c -mips1 -mabi=32 -mfp32 -mno-gpopt -G 0 -fno-pic -mno-abicalls
 

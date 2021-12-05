@@ -9,38 +9,38 @@
 
 extern int swapSem;
 extern swap_t swapPool [POOLSIZE];
+extern void stateCopy(state_PTR oldState, state_PTR newState);
 
 void pager(){
     support_t * support = SYSCALL(GETSUPPORTPTR, ZERO, ZERO, ZERO);
-    state_t exceptionState = support->sup_exceptState[PGFAULTEXCEPT];
+    state_t exceptionState;
+    stateCopy(&support->sup_exceptState[GENERALEXCEPT], &exceptionState);
     int cause = exceptionState.s_cause;
     /* If cause isa TLB Modification exception, threat it as a program trap */
     if(cause == 1){
-	    SYSCALL(TERMINATEPROCESS, ZERO, ZERO, ZERO);
+	    SYSCALL(TERMINATE, ZERO, ZERO, ZERO);
     }else{
         /* mutual exclusion of the swap pool table */
         SYSCALL(PASSEREN, &swapSem, ZERO, ZERO);
-        int missingPgNo = exceptionState.s_entryHI & GETPAGENO >> VPNSHIFT; // tbfout
+        int missingPgNo = exceptionState.s_entryHI & GETPAGENO >> VPNSHIFT; /* tbfout */
         int frame = pickVictim();
         /* selected frame is used */
         pteEntry_PTR page;
         if(swapPool[frame].sw_asid!=-1){
             interruptsSwitch(0);
             TLBCLR();
+            interruptsSwitch(1);
             pteEntry_PTR page = (pteEntry_PTR) (0x20020000 + frame* PAGESIZE);
             page->entryLO &= ~(512);
             /* TODO: define this stuff */
-            flashIO(1, page, swapPool[frame].sw_asid);
-            /* might need to move up 1 line */
-            interruptsSwitch(1);
+            flashIO(1, page, swapPool[frame].sw_asid-1);
         }
-        /* TODO: define this stuff */
-        flashIO(0, page, support->sup_asid);
+        flashIO(0, page, support->sup_asid-1);
         swapPool[frame].sw_asid = support->sup_asid;
         swapPool[frame].sw_pageNo = missingPgNo;
         swapPool[frame].sw_pte = page;
         SYSCALL(VERHOGEN, &swapSem, ZERO, ZERO);
-        
+        LDST(exceptionState);  
     }
 }
 void uTLB_RefillHandler(){
@@ -49,4 +49,20 @@ void uTLB_RefillHandler(){
     setENTRYLO(currentProc->p_s.s_entryLO);
     TLBWR();
     LDST(bios);
+}
+
+int pickVictim(){
+    static int i=0;
+    i=(i+1)%POOLSIZE;
+    return i;
+}
+
+void flashIO(int writeOn, int data, int flashIOdNo){
+    device_t* flash = (device_t *) ((0x10000054 + 0x80) + (flashIOdNo * 0x10));
+    SYSCALL(PASSEREN, (int)&semDevices[8+flashIOdNo], 0, 0);				/* P(flash_mut) */
+    flash->d_command = 2+writeOn;
+    flash->d_data0 = data;
+    SYSCALL(WAITIO, FLASHINT, 0, 0);
+    SYSCALL(VERHOGEN, (int)&semDevices[8+flashIOdNo], 0, 0);				/* V(flash_mut) */
+
 }
