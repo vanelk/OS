@@ -6,6 +6,10 @@
     "bootstrap-rom": "/usr/share/umps3/coreboot.rom.umps",
     "clock-rate": 1,
     "devices": {
+        "flash0": {
+            "enabled": true,
+            "file": "/mnt/hgfs/OS/testers/fibEight.umps"
+        },
         "terminal0": {
             "enabled": true,
             "file": "term0.umps"
