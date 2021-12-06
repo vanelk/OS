@@ -6,26 +6,25 @@
 #include "../h/exceptions.h"
 #include "../h/initial.h"
 #include "../h/interrupts.h"
+#include "../h/initproc.h"
 
 swap_t swapPool [POOLSIZE];
 int devicesSem[DEVNUM];
-int swapSem = 1;
-pcb_t procTable[MAXPROC];
-support_t supports [MAXPROC+1];
+int swapSem;
+support_t supports [MAXUPROC+1];
 extern pcb_PTR currentProc;
 extern void uSyscallHandler();
 extern void pager();
 
 
 void test() {
-    /*initTLBSupport();*/
     int pid = 1;
-    state_PTR procState;
-    for (pid; pid<MAXPROC+ONE; pid++) {
-        procState->s_sp = 0xc0000000;
-        procState->s_pc = procState->s_t9 = (memaddr)0x800000B0;
-        procState->s_status = ALLOFF | KUON | TEBITON | IEON | IMON;
-        procState->s_entryHI = pid << ASIDSHIFT;
+    state_t procState;
+    for (pid; pid<MAXUPROC+ONE; pid++) {
+        procState.s_sp = 0xC0000000;
+        procState.s_pc = procState.s_t9 = (memaddr)0x800000B0;
+        procState.s_status = ALLOFF | KUON | TEBITON | IEON | IMON;
+        procState.s_entryHI = pid << ASIDSHIFT;
         int i = 0;
         for(i; i < POOLSIZE; i++) {
            supports[pid].sup_privatPgTb[i].entryHI = ((0x80000 + i) << VPNSHIFT) | (pid << ASIDSHIFT);
@@ -41,6 +40,5 @@ void test() {
         supports[pid].sup_exceptContext[PGFAULTEXCEPT].c_pc =  (memaddr) pager;
         SYSCALL(CREATEPROCESS, (int)&procState, (int) &supports[pid], 0);
     }
-
-    while (1) 2-1;
+    while (TRUE) TRUE;
 }

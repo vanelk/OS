@@ -6,13 +6,21 @@
     "bootstrap-rom": "/usr/share/umps3/coreboot.rom.umps",
     "clock-rate": 1,
     "devices": {
+        "disk0": {
+            "enabled": false,
+            "file": "/mnt/hgfs/OS/testers/printerTest.umps"
+        },
         "flash0": {
             "enabled": true,
-            "file": "/mnt/hgfs/OS/testers/fibEight.umps"
+            "file": "/mnt/hgfs/OS/testers/timeOfDay.umps"
         },
         "terminal0": {
             "enabled": true,
-            "file": "term0.umps"
+            "file": "/mnt/hgfs/OS/phase3/term0.umps"
+        },
+        "terminal1": {
+            "enabled": true,
+            "file": "/mnt/hgfs/OS/testers/terminalTest1.umps"
         }
     },
     "execution-rom": "/usr/share/umps3/exec.rom.umps",
@@ -22,6 +30,6 @@
         "asid": 64,
         "file": "kernel.stab.umps"
     },
-    "tlb-floor-address": "0xffffffff",
+    "tlb-floor-address": "0x40000000",
     "tlb-size": 16
 }

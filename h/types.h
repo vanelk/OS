@@ -60,7 +60,6 @@ typedef struct passupvector {
 #define STATEREGNUM	31
 typedef struct state_t {
 	unsigned int	s_entryHI;
-	unsigned int	s_entryLO; /* is this supposed be here */
 	unsigned int	s_cause;
 	unsigned int	s_status;
 	unsigned int 	s_pc;
