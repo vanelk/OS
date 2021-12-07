@@ -23,27 +23,27 @@ void pager(){
         int missingPgNo = exceptionState->s_entryHI & GETPAGENO >> VPNSHIFT; /* tbfout */
         int frame = pickVictim();
         /* selected frame is used */
-        pteEntry_PTR page;
+        pteEntry_PTR page = (pteEntry_PTR) (0x20020000 + ((frame - 1)* PAGESIZE));
         if(swapPool[frame].sw_asid!=-1){
             interruptsSwitch(0);
             TLBCLR();
-            interruptsSwitch(1);
-            pteEntry_PTR page = (pteEntry_PTR) (0x20020000 + frame* PAGESIZE);
             page->entryLO &= ~(512);
             /* TODO: define this stuff */
-            flashIO(1, frame, page, swapPool[frame].sw_asid-1);
+            interruptsSwitch(1);
+            flashIO(1, frame, page, swapPool[frame].sw_asid);
         }
-        flashIO(0, frame, page, support->sup_asid-1);
+        flashIO(0, missingPgNo, page, support->sup_asid-1);
         swapPool[frame].sw_asid = support->sup_asid;
         swapPool[frame].sw_pageNo = missingPgNo;
         swapPool[frame].sw_pte = page;
+        TLBCLR();
         SYSCALL(VERHOGEN, &swapSem, ZERO, ZERO);
         LDST(exceptionState);  
     }
 }
 void uTLB_RefillHandler(){
     state_PTR bios = (state_PTR) BIOSDATAPAGE;
-    setENTRYHI(currentProc->p_s.s_entryHI);
+    setENTRYHI(bios->s_entryHI);
 	setENTRYLO(getENTRYLO());
     /*setENTRYLO(currentProc->p_s.);*/
     TLBWR();
@@ -55,13 +55,16 @@ int pickVictim(){
     i=(i+1)%POOLSIZE;
     return i;
 }
-
-void flashIO(int writeOn, int blockNum, int data, int flashIOdNo){
-    device_t* flash = (device_t *) ((0x10000054 + 0x80) + (flashIOdNo * 0x10));
-    SYSCALL(PASSEREN, (int)&semDevices[8+flashIOdNo], 0, 0);				/* P(flash_mut) */
-    flash->d_command = (blockNum << 8) | 2+writeOn;
+void flashIO(int writeOn, int blockNum, memaddr data, int flashIOdNo){
+    interruptsSwitch(0);
+    devregarea_t * ram = RAMBASEADDR;
+    
+    device_t* flash = (&ram->devreg[8+flashIOdNo]); /*(device_t *) ((0x10000054 + 0x80) + (flashIOdNo * 0x10));*/
+    /*SYSCALL(PASSEREN, (int)&devicesSem[8+flashIOdNo], 0, 0);*/				/* P(flash_mut) */
     flash->d_data0 = data;
-    SYSCALL(WAITIO, FLASHINT, 0, 0);
-    SYSCALL(VERHOGEN, (int)&semDevices[8+flashIOdNo], 0, 0);				/* V(flash_mut) */
+    flash->d_command = (blockNum << 8) | 2+writeOn;
+    interruptsSwitch(1);
+    SYSCALL(WAITIO, FLASHINT, flashIOdNo, 0);
+    /*SYSCALL(VERHOGEN, (int)&devicesSem[8+flashIOdNo], 0, 0);*/				/* V(flash_mut) */
 
 }

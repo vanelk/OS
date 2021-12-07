@@ -17,10 +17,6 @@
         "terminal0": {
             "enabled": true,
             "file": "/mnt/hgfs/OS/phase3/term0.umps"
-        },
-        "terminal1": {
-            "enabled": true,
-            "file": "/mnt/hgfs/OS/testers/terminalTest1.umps"
         }
     },
     "execution-rom": "/usr/share/umps3/exec.rom.umps",

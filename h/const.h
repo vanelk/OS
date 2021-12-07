@@ -136,7 +136,7 @@
 
 
 /* phase 3 global variables */
-#define MAXUPROC 8
+#define MAXUPROC 1
 #define POOLSIZE 32
 #define TERMINATE 9
 #define GetTOD 10 

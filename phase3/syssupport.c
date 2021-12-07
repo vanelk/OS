@@ -49,9 +49,9 @@ void uSyscallHandler(){
 
 void interruptsSwitch(int on){
     if(on){
-        setSTATUS(getSTATUS() | IEON);
+        setSTATUS(getSTATUS() | ONE);
     } else {
-        setSTATUS(getSTATUS() & ~IEON);
+        setSTATUS(getSTATUS() & ~ONE);
     }
 }
 

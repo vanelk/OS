@@ -10,7 +10,7 @@
 
 swap_t swapPool [POOLSIZE];
 int devicesSem[DEVNUM];
-int swapSem;
+int swapSem = 1;
 support_t supports [MAXUPROC+1];
 extern pcb_PTR currentProc;
 extern void uSyscallHandler();
