@@ -3,6 +3,6 @@
 swap_t swapPool [POOLSIZE];
 int devicesSem[DEVNUM];
 int swapSem;
-support_t supports [MAXUPROC+1];
+support_t supports [MAXUPROC];
 void test();
 #endif

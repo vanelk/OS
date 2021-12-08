@@ -137,7 +137,8 @@
 
 /* phase 3 global variables */
 #define MAXUPROC 1
-#define POOLSIZE 32
+#define POOLSIZE 10
+#define PGTABLESIZE 32
 #define TERMINATE 9
 #define GetTOD 10 
 #define WRITETOPRINTER 11 
@@ -147,10 +148,13 @@
 #define TERMSTATMASK 0xff
 #define RECVD 5
 #define DIRTYON 0x00000400
+#define VALIDON 0x00000200
 #define VPNSHIFT 12
-#define ASIDSHIFT 5
+#define ASIDSHIFT 6
 #define GETPAGENO 0x00007000
-
+#define VPNMASK 0x3ffff000
+#define GETASID 0x00000FC0
+#define SWPSTARTADDR 0x20020000
 #define PRINTCHR	2
 #define BYTELEN	8
 #endif

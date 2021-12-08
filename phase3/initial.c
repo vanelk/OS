@@ -18,9 +18,6 @@ extern void test();
 extern void uTLB_RefillHandler();
 HIDDEN void exceptionHandler();
 
-void debug(int a, int b){
-    int i = 2+4;
-}
 int main(){
     /*initialize PCB and ASL*/
     initPcbs();

@@ -30,10 +30,10 @@ void uSyscallHandler(){
                 exceptionState->s_v0 = getTOD();
                 break;
             case WRITETOPRINTER:
-                exceptionState->s_v0 = writeToPrinter(arg1, arg2, pid);
+                exceptionState->s_v0 = writeToPrinter(arg1, arg2, pid-1);
                 break;
             case WRITETOTERMINAL:
-                exceptionState->s_v0 = writeToTerminal(arg1, arg2, pid);
+                exceptionState->s_v0 = writeToTerminal(arg1, arg2, pid-1);
                 break;
             case READFROMTERMINAL:
                 exceptionState->s_v0 =  readFromTerminal(arg1);

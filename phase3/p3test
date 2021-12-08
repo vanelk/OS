@@ -6,13 +6,9 @@
     "bootstrap-rom": "/usr/share/umps3/coreboot.rom.umps",
     "clock-rate": 1,
     "devices": {
-        "disk0": {
-            "enabled": false,
-            "file": "/mnt/hgfs/OS/testers/printerTest.umps"
-        },
         "flash0": {
             "enabled": true,
-            "file": "/mnt/hgfs/OS/testers/timeOfDay.umps"
+            "file": "/mnt/hgfs/OS/testers/asciiArt.umps"
         },
         "terminal0": {
             "enabled": true,
